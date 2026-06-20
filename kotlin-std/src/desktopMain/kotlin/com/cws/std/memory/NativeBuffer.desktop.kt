@@ -25,7 +25,7 @@ actual open class NativeBuffer actual constructor(
     var buffer: ByteBuffer = ByteBuffer.allocateDirect(capacity)
         ?: throw RuntimeException("Failed to allocate for NativeBuffer $capacity bytes")
 
-//    actual val address: Long = CMemory.addressOf(buffer)
+    //    actual val address: Long = CMemory.addressOf(buffer)
     actual val address: Long = 0
 
     actual var position: Int
