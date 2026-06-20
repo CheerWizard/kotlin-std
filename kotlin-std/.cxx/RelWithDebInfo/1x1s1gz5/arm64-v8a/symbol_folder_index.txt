@@ -1,0 +1,1 @@
+/Users/vitaliiandrusyshyn/StudioProjects/Kanvas/kotlin-std/build/intermediates/cxx/RelWithDebInfo/1x1s1gz5/obj/arm64-v8a

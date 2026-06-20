@@ -1,0 +1,1 @@
+/Users/vitaliiandrusyshyn/StudioProjects/kotlin-std/kotlin-std/build/intermediates/cxx/Debug/2c23a6c5/obj/arm64-v8a

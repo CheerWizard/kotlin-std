@@ -1,0 +1,7 @@
+.gradle/
+build/
+*.class
+# Project exclude paths
+.cxx/
+.idea
+.kotlin
