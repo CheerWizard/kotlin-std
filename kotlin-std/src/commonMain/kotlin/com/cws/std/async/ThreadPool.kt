@@ -40,7 +40,7 @@ class ThreadPool(
         running = true
         while (running) {
             val task = tasks.pop()
-            task?.action()
+            task?.action?.invoke()
         }
     }
 
