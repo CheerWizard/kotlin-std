@@ -1,6 +1,5 @@
 package com.cws.std.async
 
-import com.cws.std.async.Task
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.w3c.dom.Worker
 import kotlin.math.max
@@ -17,7 +16,7 @@ actual open class Thread actual constructor(
     init {
         worker.onmessage = { msg ->
             when (msg.data) {
-                "start" -> task()
+                "start" -> task.action()
             }
         }
 

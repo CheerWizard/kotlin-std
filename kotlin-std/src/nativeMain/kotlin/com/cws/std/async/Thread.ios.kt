@@ -21,7 +21,6 @@ import platform.posix.pthread_self
 import platform.posix.pthread_setname_np
 import platform.posix.pthread_tVar
 import platform.posix.pthread_threadid_np
-import platform.posix.syscall
 import kotlin.experimental.ExperimentalNativeApi
 
 actual open class Thread actual constructor(
@@ -40,9 +39,7 @@ actual open class Thread actual constructor(
     }
 
     actual fun start() {
-        // create reference to Kotlin task function
-        val stableRef = StableRef.create(task)
-        // provide it to C function to be called from C
+        val taskRef = StableRef.create(task)
         pthread_create(
             thread.ptr,
             null,
@@ -54,7 +51,7 @@ actual open class Thread actual constructor(
                 ref.dispose()
                 null
             },
-            stableRef.asCPointer()
+            taskRef.asCPointer()
         )
     }
 

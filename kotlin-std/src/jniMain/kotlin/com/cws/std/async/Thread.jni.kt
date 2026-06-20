@@ -14,7 +14,7 @@ actual open class Thread actual constructor(
         start = start,
         name = name,
         priority = priority,
-        block = task,
+        block = task.action,
     )
 
     actual fun start() {
