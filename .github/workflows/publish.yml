@@ -27,7 +27,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Publish
-        run: ./gradlew :print-lib:publishAllPublicationsToCentralPortal
+        run: ./gradlew :kotlin-std:publishAllPublicationsToCentralPortal
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
