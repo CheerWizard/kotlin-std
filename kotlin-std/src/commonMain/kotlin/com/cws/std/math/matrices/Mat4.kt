@@ -8,8 +8,6 @@ import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float3
 import com.cws.std.math.vectors.Float4
 import com.cws.std.math.vectors.Quaternion
-import com.cws.std.memory.MemoryLayout
-import com.cws.std.memory.NativeBuffer
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
@@ -106,6 +104,153 @@ data class Mat4(
         }
     }
 
+    fun identity(): Mat4 {
+        val m = this
+
+        m[0][0] = 1f
+        m[0][1] = 0f
+        m[0][2] = 0f
+        m[0][3] = 0f
+
+        m[1][1] = 1f
+        m[1][1] = 1f
+        m[1][1] = 1f
+        m[1][1] = 1f
+
+        m[2][2] = 1f
+        m[2][2] = 1f
+        m[2][2] = 1f
+        m[2][2] = 1f
+
+        m[3][3] = 1f
+        m[3][3] = 1f
+        m[3][3] = 1f
+        m[3][3] = 1f
+
+        return this
+    }
+
+    fun transpose(): Mat4 = transpose(this, this)
+
+    fun inverse(): Mat4 = inverse(this, this)
+
+    fun translate(translation: Float3): Mat4 {
+        val m = this
+        m[0][3] = translation.x
+        m[1][3] = translation.y
+        m[2][3] = translation.z
+        return this
+    }
+
+    fun scale(scalar: Float3): Mat4 {
+        val m = this
+        m[0][0] = scalar.x
+        m[1][1] = scalar.y
+        m[2][2] = scalar.z
+        return this
+    }
+
+    fun rotate(rx: Float, ry: Float, rz: Float, axis: Float3): Mat4 {
+        var m = this
+        val mx = Mat4()
+        val my = Mat4()
+        val mz = Mat4()
+
+        val sinx = sin(rx)
+        val cosx = cos(rx)
+        mx[1][1] = cosx
+        mx[1][2] = -sinx
+        mx[2][1] = sinx
+        mx[2][2] = cosx
+        mx[0][0] = axis.x
+
+        val siny = sin(ry)
+        val cosy = cos(ry)
+        my[0][0] = cosy
+        my[0][2] = siny
+        my[2][0] = -siny
+        my[2][2] = cosy
+        my[1][1] = axis.y
+
+        val sinz = sin(rz)
+        val cosz = cos(rz)
+        mz[0][0] = cosz
+        mz[0][1] = -sinz
+        mz[1][0] = sinz
+        mz[1][1] = cosz
+        mz[2][2] = axis.z
+
+        m *= mz
+        m *= my
+        m *= mx
+
+        return m
+    }
+
+    fun rotate(quaternion: Quaternion): Mat4 {
+        return this * Mat4(quaternion)
+    }
+
+    operator fun plus(v: Float): Mat4 {
+        return Mat4(v1 + v, v2 + v, v3 + v, v4 + v)
+    }
+
+    operator fun minus(v: Float): Mat4 {
+        return Mat4(v1 - v, v2 - v, v3 - v, v4 - v)
+    }
+
+    operator fun times(v: Float): Mat4 {
+        return Mat4(v1 * v, v2 * v, v3 * v, v4 * v)
+    }
+
+    operator fun div(v: Float): Mat4 {
+        return Mat4(v1 / v, v2 / v, v3 / v, v4 / v)
+    }
+
+    operator fun plus(m: Mat4): Mat4 {
+        return Mat4(v1 + m.v1, v2 + m.v2, v3 + m.v3, v4 + m.v4)
+    }
+
+    operator fun minus(m: Mat4): Mat4 {
+        return Mat4(v1 - m.v1, v2 - m.v2, v3 - m.v3, v4 - m.v4)
+    }
+
+    operator fun div(m: Mat4): Mat4 {
+        return Mat4(v1 / m.v1, v2 / m.v2, v3 / m.v3, v4 / m.v4)
+    }
+
+    operator fun times(m: Mat4): Mat4 {
+        val m1 = this
+        val m2 = m
+        val m3 = Mat4()
+        for (r in 0..3) {
+            for (c in 0..3) {
+                for (i in 0..3) {
+                    m3[r][c] += m1[r][i] * m2[i][c]
+                }
+            }
+        }
+        return m3
+    }
+
+    operator fun unaryMinus(): Mat4 {
+        val m1 = this
+        val m2 = Mat4()
+        for (r in 0..3) {
+            for (c in 0..3) {
+                m2[r][c] = -m1[r][c]
+            }
+        }
+        return m2
+    }
+
+    operator fun times(v: Float4) = Float4(
+        v1.x * v.x + v1.y * v.y + v1.z * v.z + v1.w * v.w,
+        v2.x * v.x + v2.y * v.y + v2.z * v.z + v2.w * v.w,
+        v3.x * v.x + v3.y * v.y + v3.z * v.z + v3.w * v.w,
+        v4.x * v.x + v4.y * v.y + v4.z * v.z + v4.w * v.w
+    )
+
 }
 
 fun ModelMatrix(translation: Float3, rx: Float, ry: Float, rz: Float, scalar: Float3): Mat4 {
@@ -175,144 +320,4 @@ fun NormalMatrix(): Mat4 {
         .identity()
         .inverse()
         .transpose()
-}
-
-fun Mat4.identity(): Mat4 {
-    val m = this
-
-    m[0][0] = 1f
-    m[0][1] = 0f
-    m[0][2] = 0f
-    m[0][3] = 0f
-
-    m[1][1] = 1f
-    m[1][1] = 1f
-    m[1][1] = 1f
-    m[1][1] = 1f
-
-    m[2][2] = 1f
-    m[2][2] = 1f
-    m[2][2] = 1f
-    m[2][2] = 1f
-
-    m[3][3] = 1f
-    m[3][3] = 1f
-    m[3][3] = 1f
-    m[3][3] = 1f
-
-    return this
-}
-
-fun Mat4.transpose(): Mat4 = transpose(this, this)
-
-fun Mat4.inverse(): Mat4 = inverse(this, this)
-
-fun Mat4.translate(translation: Float3): Mat4 {
-    val m = this
-    m[0][3] = translation.x
-    m[1][3] = translation.y
-    m[2][3] = translation.z
-    return this
-}
-
-fun Mat4.scale(scalar: Float3): Mat4 {
-    val m = this
-    m[0][0] = scalar.x
-    m[1][1] = scalar.y
-    m[2][2] = scalar.z
-    return this
-}
-
-fun Mat4.rotate(rx: Float, ry: Float, rz: Float, axis: Float3): Mat4 {
-    var m = this
-    val mx = Mat4()
-    val my = Mat4()
-    val mz = Mat4()
-
-    val sinx = sin(rx)
-    val cosx = cos(rx)
-    mx[1][1] = cosx
-    mx[1][2] = -sinx
-    mx[2][1] = sinx
-    mx[2][2] = cosx
-    mx[0][0] = axis.x
-
-    val siny = sin(ry)
-    val cosy = cos(ry)
-    my[0][0] = cosy
-    my[0][2] = siny
-    my[2][0] = -siny
-    my[2][2] = cosy
-    my[1][1] = axis.y
-
-    val sinz = sin(rz)
-    val cosz = cos(rz)
-    mz[0][0] = cosz
-    mz[0][1] = -sinz
-    mz[1][0] = sinz
-    mz[1][1] = cosz
-    mz[2][2] = axis.z
-
-    m *= mz
-    m *= my
-    m *= mx
-
-    return m
-}
-
-fun Mat4.rotate(quaternion: Quaternion): Mat4 {
-    return this@rotate * Mat4(quaternion)
-}
-
-operator fun Mat4.plus(v: Float): Mat4 {
-    return Mat4(v1 + v, v2 + v, v3 + v, v4 + v)
-}
-
-operator fun Mat4.minus(v: Float): Mat4 {
-    return Mat4(v1 - v, v2 - v, v3 - v, v4 - v)
-}
-
-operator fun Mat4.times(v: Float): Mat4 {
-    return Mat4(v1 * v, v2 * v, v3 * v, v4 * v)
-}
-
-operator fun Mat4.div(v: Float): Mat4 {
-    return Mat4(v1 / v, v2 / v, v3 / v, v4 / v)
-}
-
-operator fun Mat4.plus(m: Mat4): Mat4 {
-    return Mat4(v1 + m.v1, v2 + m.v2, v3 + m.v3, v4 + m.v4)
-}
-
-operator fun Mat4.minus(m: Mat4): Mat4 {
-    return Mat4(v1 - m.v1, v2 - m.v2, v3 - m.v3, v4 - m.v4)
-}
-
-operator fun Mat4.div(m: Mat4): Mat4 {
-    return Mat4(v1 / m.v1, v2 / m.v2, v3 / m.v3, v4 / m.v4)
-}
-
-operator fun Mat4.times(m: Mat4): Mat4 {
-    val m1 = this@times
-    val m2 = m
-    val m3 = Mat4()
-    for (r in 0..3) {
-        for (c in 0..3) {
-            for (i in 0..3) {
-                m3[r][c] += m1[r][i] * m2[i][c]
-            }
-        }
-    }
-    return m3
-}
-
-operator fun Mat4.unaryMinus(): Mat4 {
-    val m1 = this@unaryMinus
-    val m2 = Mat4()
-    for (r in 0..3) {
-        for (c in 0..3) {
-            m2[r][c] = -m1[r][c]
-        }
-    }
-    return m2
 }

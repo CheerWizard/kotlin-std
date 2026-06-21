@@ -43,73 +43,79 @@ data class Mat3(
         }
     }
 
-}
+    fun identity(): Mat3 {
+        v1.x = 1f
+        v1.y = 0f
+        v1.z = 0f
 
-fun Mat3.identity(): Mat3 {
-    v1.x = 1f
-    v1.y = 0f
-    v1.z = 0f
+        v2.x = 0f
+        v2.y = 1f
+        v2.z = 0f
 
-    v2.x = 0f
-    v2.y = 1f
-    v2.z = 0f
+        v3.x = 0f
+        v3.y = 0f
+        v3.z = 1f
 
-    v3.x = 0f
-    v3.y = 0f
-    v3.z = 1f
+        return this
+    }
 
-    return this
-}
+    fun transpose(): Mat3 = transpose(this, this)
 
-fun Mat3.transpose(): Mat3 = transpose(this, this)
+    fun inverse(): Mat3 = inverse(this, this)
 
-fun Mat3.inverse(): Mat3 = inverse(this, this)
+    operator fun minus(v: Float): Mat3 {
+        return Mat3(v1 - v, v2 - v, v3 - v)
+    }
 
-operator fun Mat3.minus(v: Float): Mat3 {
-    return Mat3(v1 - v, v2 - v, v3 - v)
-}
+    operator fun times(v: Float): Mat3 {
+        return Mat3(v1 * v, v2 * v, v3 * v)
+    }
 
-operator fun Mat3.times(v: Float): Mat3 {
-    return Mat3(v1 * v, v2 * v, v3 * v)
-}
+    operator fun div(v: Float): Mat3 {
+        return Mat3(v1 / v, v2 / v, v3 / v)
+    }
 
-operator fun Mat3.div(v: Float): Mat3 {
-    return Mat3(v1 / v, v2 / v, v3 / v)
-}
+    operator fun plus(m: Mat3): Mat3 {
+        return Mat3(v1 + m.v1, v2 + m.v2, v3 + m.v3)
+    }
 
-operator fun Mat3.plus(m: Mat3): Mat3 {
-    return Mat3(v1 + m.v1, v2 + m.v2, v3 + m.v3)
-}
+    operator fun minus(m: Mat3): Mat3 {
+        return Mat3(v1 - m.v1, v2 - m.v2, v3 - m.v3)
+    }
 
-operator fun Mat3.minus(m: Mat3): Mat3 {
-    return Mat3(v1 - m.v1, v2 - m.v2, v3 - m.v3)
-}
+    operator fun div(m: Mat3): Mat3 {
+        return Mat3(v1 / m.v1, v2 / m.v2, v3 / m.v3)
+    }
 
-operator fun Mat3.div(m: Mat3): Mat3 {
-    return Mat3(v1 / m.v1, v2 / m.v2, v3 / m.v3)
-}
-
-operator fun Mat3.times(m: Mat3): Mat3 {
-    val m1 = this@times
-    val m2 = m
-    val m3 = Mat3()
-    for (r in 0..2) {
-        for (c in 0..2) {
-            for (i in 0..2) {
-                m3[r][c] += m1[r][i] * m2[i][c]
+    operator fun times(m: Mat3): Mat3 {
+        val m1 = this
+        val m2 = m
+        val m3 = Mat3()
+        for (r in 0..2) {
+            for (c in 0..2) {
+                for (i in 0..2) {
+                    m3[r][c] += m1[r][i] * m2[i][c]
+                }
             }
         }
+        return m3
     }
-    return m3
-}
 
-operator fun Mat3.unaryMinus(): Mat3 {
-    val m1 = this@unaryMinus
-    val m2 = Mat3()
-    for (r in 0..2) {
-        for (c in 0..2) {
-            m2[r][c] = -m1[r][c]
+    operator fun unaryMinus(): Mat3 {
+        val m1 = this
+        val m2 = Mat3()
+        for (r in 0..2) {
+            for (c in 0..2) {
+                m2[r][c] = -m1[r][c]
+            }
         }
+        return m2
     }
-    return m2
+
+    operator fun times(v: Float3) = Float3(
+        v1.x * v.x + v1.y * v.y + v1.z * v.z,
+        v2.x * v.x + v2.y * v.y + v2.z * v.z,
+        v3.x * v.x + v3.y * v.y + v3.z * v.z
+    )
+
 }

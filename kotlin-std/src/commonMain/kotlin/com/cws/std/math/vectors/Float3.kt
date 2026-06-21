@@ -1,5 +1,6 @@
 package com.cws.std.math.vectors
 
+import com.cws.std.math.matrices.Mat3
 import com.cws.std.math.operators.normalize
 import kotlin.math.sqrt
 
@@ -73,5 +74,11 @@ data class Float3(
     operator fun unaryMinus(): Float3 {
         return Float3(-x, -y, -z)
     }
+
+    operator fun times(m: Mat3) = Float3(
+        x * m.v1.x + y * m.v2.x + z * m.v3.x,
+        x * m.v1.y + y * m.v2.y + z * m.v3.y,
+        x * m.v1.z + y * m.v2.z + z * m.v3.z
+    )
 
 }

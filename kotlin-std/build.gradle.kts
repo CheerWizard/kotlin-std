@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.cheerwizard"
-version = "1.0.0"
+version = "1.0.1"
 
 kotlin {
     androidTarget {
@@ -31,6 +31,11 @@ kotlin {
     iosArm64()
     iosX64()
     iosSimulatorArm64()
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
 
     sourceSets {
         val commonMain by getting {

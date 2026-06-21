@@ -1,5 +1,6 @@
 package com.cws.std.math.vectors
 
+import com.cws.std.math.matrices.Mat2
 import com.cws.std.math.operators.normalize
 import kotlin.math.sqrt
 
@@ -69,5 +70,10 @@ data class Float2(
     operator fun unaryMinus(): Float2 {
         return Float2(-x, -y)
     }
+
+    operator fun times(m: Mat2) = Float2(
+        x * m.v1.x + y * m.v2.x,
+        x * m.v1.y + y * m.v2.y
+    )
 
 }

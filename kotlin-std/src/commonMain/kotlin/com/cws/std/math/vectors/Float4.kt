@@ -1,5 +1,6 @@
 package com.cws.std.math.vectors
 
+import com.cws.std.math.matrices.Mat4
 import kotlin.math.sqrt
 
 data class Float4(
@@ -76,5 +77,12 @@ data class Float4(
     operator fun unaryMinus(): Float4 {
         return Float4(-x, -y, -z, -w)
     }
+
+    operator fun times(m: Mat4) = Float4(
+        x * m.v1.x + y * m.v2.x + z * m.v3.x + w * m.v4.x,
+        x * m.v1.y + y * m.v2.y + z * m.v3.y + w * m.v4.y,
+        x * m.v1.z + y * m.v2.z + z * m.v3.z + w * m.v4.z,
+        x * m.v1.w + y * m.v2.w + z * m.v3.w + w * m.v4.w
+    )
 
 }
