@@ -3,6 +3,7 @@ package com.cws.std.math.matrices
 import com.cws.std.math.operators.Degree
 import com.cws.std.math.operators.cross
 import com.cws.std.math.operators.inverse
+import com.cws.std.math.operators.normalize
 import com.cws.std.math.operators.radians
 import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float3
@@ -284,7 +285,7 @@ fun RigidMatrix(translation: Float3, quaternion: Quaternion): Mat4 {
 }
 
 fun ViewMatrix(position: Float3, front: Float3, up: Float3): Mat4 {
-    val right = cross(front, up).normalize()
+    val right = normalize(cross(front, up))
     val f = -front
     val c = cross(right, front)
     val m = Mat4(

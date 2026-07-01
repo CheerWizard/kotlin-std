@@ -1,4 +1,4 @@
-package com.cws.std.math
+package com.cws.std.math.vectors
 
 import kotlin.math.roundToInt
 

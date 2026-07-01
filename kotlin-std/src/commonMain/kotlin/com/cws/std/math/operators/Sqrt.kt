@@ -1,5 +1,6 @@
-package com.cws.std.math
+package com.cws.std.math.operators
 
+import com.cws.std.math.vectors.roundToUInt
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 

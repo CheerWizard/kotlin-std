@@ -1,7 +1,6 @@
 package com.cws.std.math.vectors
 
-import com.cws.std.math.operators.normalize
-import com.cws.std.math.sqrt
+import com.cws.std.math.operators.sqrt
 
 data class UInt4(
     var x: UInt = 0u,
@@ -38,10 +37,6 @@ data class UInt4(
         return sqrt(x * x + y * y + z * z + w * w)
     }
 
-    fun normalize(): UInt4 {
-        return normalize(this, this)
-    }
-
     operator fun plus(v: UInt): UInt4 {
         return UInt4(x + v, y + v, z + v, w + v)
     }
@@ -73,5 +68,17 @@ data class UInt4(
     operator fun div(v: UInt4): UInt4 {
         return UInt4(x / v.x, y / v.y, z / v.z, w / v.w)
     }
+
+    constructor(v: UInt)                     : this(v, v, v, v)
+    constructor(xyz: UInt3, w: UInt)         : this(xyz.x, xyz.y, xyz.z, w)
+    constructor(x: UInt, yzw: UInt3)         : this(x, yzw.x, yzw.y, yzw.z)
+    constructor(xy: UInt2, zw: UInt2)        : this(xy.x, xy.y, zw.x, zw.y)
+    constructor(xy: UInt2, z: UInt, w: UInt) : this(xy.x, xy.y, z, w)
+    constructor(x: UInt, y: UInt, zw: UInt2) : this(x, y, zw.x, zw.y)
+    constructor(x: UInt, yz: UInt2, w: UInt) : this(x, yz.x, yz.y, w)
+
+    val xy   get() = UInt2(x, y)
+    val xyz  get() = UInt3(x, y, z)
+    val xyzw get() = UInt4(x, y, z, w)
 
 }

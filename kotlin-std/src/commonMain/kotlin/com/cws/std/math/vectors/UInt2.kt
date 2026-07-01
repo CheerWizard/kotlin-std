@@ -1,13 +1,7 @@
 package com.cws.std.math.vectors
 
-import com.cws.std.math.operators.normalize
-import com.cws.std.math.roundToUInt
-import com.cws.std.memory.MemoryLayout
-import com.cws.std.memory.NativeBuffer
 import com.cws.std.memory.STD140_SIZE_BYTES
 import com.cws.std.memory.STD430_SIZE_BYTES
-import com.cws.std.memory.nextUInt
-import com.cws.std.memory.pushUInt
 import kotlin.math.sqrt
 
 data class UInt2(
@@ -43,10 +37,6 @@ data class UInt2(
         return sqrt((x * x + y * y).toDouble()).roundToUInt()
     }
 
-    fun normalize(): UInt2 {
-        return normalize(this, this)
-    }
-
     operator fun plus(v: UInt): UInt2 {
         return UInt2(x + v, y + v)
     }
@@ -78,5 +68,10 @@ data class UInt2(
     operator fun div(v: UInt2): UInt2 {
         return UInt2(x / v.x, y / v.y)
     }
+
+    constructor(xy: Int2) : this(xy.x.toUInt(), xy.y.toUInt())
+
+    val xx get() = UInt2(x, x);  val xy get() = UInt2(x, y)
+    val yx get() = UInt2(y, x);  val yy get() = UInt2(y, y)
 
 }

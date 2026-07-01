@@ -1,12 +1,8 @@
 package com.cws.std.math.vectors
 
-import com.cws.std.math.operators.normalize
-import com.cws.std.memory.MemoryLayout
-import com.cws.std.memory.NativeBuffer
+import com.cws.std.math.operators.sqrt
 import com.cws.std.memory.STD140_SIZE_BYTES
 import com.cws.std.memory.STD430_SIZE_BYTES
-import com.cws.std.memory.nextInt
-import com.cws.std.memory.pushInt
 
 data class Int3(
     var x: Int = 0,
@@ -42,11 +38,7 @@ data class Int3(
         val x = x
         val y = y
         val z = z
-        return com.cws.std.math.sqrt(x * x + y * y + z * z)
-    }
-
-    fun normalize(): Int3 {
-        return normalize(this, this)
+        return sqrt(x * x + y * y + z * z)
     }
 
     operator fun plus(v: Int): Int3 {
@@ -84,5 +76,15 @@ data class Int3(
     operator fun unaryMinus(): Int3 {
         return Int3(-x, -y, -z)
     }
+
+    constructor(v: Int)             : this(v, v, v)
+    constructor(xy: Int2, z: Int)   : this(xy.x, xy.y, z)
+    constructor(x: Int, yz: Int2)   : this(x, yz.x, yz.y)
+
+    val xx get() = Int2(x, x);  val xy get() = Int2(x, y);  val xz get() = Int2(x, z)
+    val yx get() = Int2(y, x);  val yy get() = Int2(y, y);  val yz get() = Int2(y, z)
+    val zx get() = Int2(z, x);  val zy get() = Int2(z, y);  val zz get() = Int2(z, z)
+    val xyz get() = Int3(x, y, z)
+    val xyzw get() = Int4(x, y, z, 0)
 
 }

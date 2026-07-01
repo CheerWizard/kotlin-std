@@ -1,13 +1,8 @@
 package com.cws.std.math.vectors
 
-import com.cws.std.math.operators.normalize
-import com.cws.std.math.sqrt
-import com.cws.std.memory.MemoryLayout
-import com.cws.std.memory.NativeBuffer
+import com.cws.std.math.operators.sqrt
 import com.cws.std.memory.STD140_SIZE_BYTES
 import com.cws.std.memory.STD430_SIZE_BYTES
-import com.cws.std.memory.nextInt
-import com.cws.std.memory.pushInt
 
 data class Int2(
     var x: Int = 0,
@@ -40,10 +35,6 @@ data class Int2(
         val x = x
         val y = y
         return sqrt(x * x + y * y)
-    }
-
-    fun normalize(): Int2 {
-        return normalize(this, this)
     }
 
     operator fun plus(v: Int): Int2 {
@@ -81,5 +72,9 @@ data class Int2(
     operator fun unaryMinus(): Int2 {
         return Int2(-x, -y)
     }
+
+    val xx get() = Int2(x, x);  val xy get() = Int2(x, y)
+    val yx get() = Int2(y, x);  val yy get() = Int2(y, y)
+    val xyz get() = Int3(x, y, 0)
 
 }

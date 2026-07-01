@@ -1,13 +1,6 @@
 package com.cws.std.math.vectors
 
-import com.cws.std.math.operators.normalize
-import com.cws.std.math.sqrt
-import com.cws.std.memory.MemoryLayout
-import com.cws.std.memory.NativeBuffer
-import com.cws.std.memory.STD140_SIZE_BYTES
-import com.cws.std.memory.STD430_SIZE_BYTES
-import com.cws.std.memory.nextUInt
-import com.cws.std.memory.pushUInt
+import com.cws.std.math.operators.sqrt
 
 data class UInt3(
     var x: UInt = 0u,
@@ -38,10 +31,6 @@ data class UInt3(
         val y = y
         val z = z
         return sqrt(x * x + y * y + z * z)
-    }
-
-    fun normalize(): UInt3 {
-        return normalize(this, this)
     }
 
     operator fun plus(v: UInt): UInt3 {
@@ -75,5 +64,13 @@ data class UInt3(
     operator fun div(v: UInt3): UInt3 {
         return UInt3(x / v.x, y / v.y, z / v.z)
     }
+
+    constructor(v: UInt)              : this(v, v, v)
+    constructor(xy: UInt2, z: UInt)   : this(xy.x, xy.y, z)
+    constructor(x: UInt, yz: UInt2)   : this(x, yz.x, yz.y)
+    constructor(xyz: Int3)            : this(xyz.x.toUInt(), xyz.y.toUInt(), xyz.z.toUInt())
+
+    val xx get() = UInt2(x, x);  val xy get() = UInt2(x, y);  val xz get() = UInt2(x, z)
+    val xyz get() = UInt3(x, y, z)
 
 }

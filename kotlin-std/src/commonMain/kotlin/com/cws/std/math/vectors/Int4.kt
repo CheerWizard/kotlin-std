@@ -1,6 +1,6 @@
 package com.cws.std.math.vectors
 
-import com.cws.std.math.sqrt
+import com.cws.std.math.operators.sqrt
 
 data class Int4(
     var x: Int = 0,
@@ -35,10 +35,6 @@ data class Int4(
         val z = z
         val w = w
         return sqrt(x * x + y * y + z * z + w * w)
-    }
-
-    fun normalize(): Int4 {
-        return com.cws.std.math.operators.normalize(this, this)
     }
 
     operator fun plus(v: Int): Int4 {
@@ -76,5 +72,16 @@ data class Int4(
     operator fun unaryMinus(): Int4 {
         return Int4(-x, -y, -z, -w)
     }
+
+    constructor(v: Int)                    : this(v, v, v, v)
+    constructor(xyz: Int3, w: Int)         : this(xyz.x, xyz.y, xyz.z, w)
+    constructor(x: Int, yzw: Int3)         : this(x, yzw.x, yzw.y, yzw.z)
+    constructor(xy: Int2, zw: Int2)        : this(xy.x, xy.y, zw.x, zw.y)
+    constructor(xy: Int2, z: Int, w: Int)  : this(xy.x, xy.y, z, w)
+    constructor(x: Int, y: Int, zw: Int2)  : this(x, y, zw.x, zw.y)
+    constructor(x: Int, yz: Int2, w: Int)  : this(x, yz.x, yz.y, w)
+
+    val xy  get() = Int2(x, y);   val xyz get() = Int3(x, y, z)
+    val xyzw get() = Int4(x, y, z, w)
 
 }
