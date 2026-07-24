@@ -400,26 +400,20 @@ fun Project.resolveSystemCmakePath(): String {
 }
 
 // Code generation configuration
-
 dependencies {
     add("kspCommonMainMetadata", project(":kotlin-std-gen"))
 }
 
-//tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-//    if (name != "kspCommonMainKotlinMetadata") {
-//        dependsOn("kspCommonMainKotlinMetadata")
-//    }
-//}
-//
-//afterEvaluate {
-//    listOf(
-//        "compileKotlinIosArm64",
-//        "compileKotlinIosSimulatorArm64",
-//        "compileKotlinIosX64",
-//        "kspKotlinIosArm64",
-//        "kspKotlinIosSimulatorArm64",
-//        "kspKotlinIosX64",
-//    ).forEach { taskName ->
-//        tasks.findByName(taskName)?.dependsOn("kspCommonMainKotlinMetadata")
-//    }
-//}
+afterEvaluate {
+    listOf(
+        "compileKotlinIosArm64",
+        "compileKotlinIosSimulatorArm64",
+        "compileKotlinIosX64",
+        "compileKotlinDesktop",
+        "kspKotlinIosArm64",
+        "kspKotlinIosSimulatorArm64",
+        "kspKotlinIosX64",
+    ).forEach { taskName ->
+        tasks.findByName(taskName)?.dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
