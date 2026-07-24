@@ -414,6 +414,7 @@ afterEvaluate {
         "compileAndroidMain",
         "androidSourcesJar",
         "compileKotlinJs",
+        "jsSourcesJar",
         "kspKotlinIosArm64",
         "kspKotlinIosSimulatorArm64",
         "kspKotlinIosX64",
