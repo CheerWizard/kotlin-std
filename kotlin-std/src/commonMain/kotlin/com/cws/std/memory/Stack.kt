@@ -1,14 +1,14 @@
 package com.cws.std.memory
 
-import com.cws.std.async.getCurrentThreadName
-import com.cws.std.async.getMaxThreadCount
+import com.cws.std.platform.PlatformInfo
+import com.cws.std.platform.fetchCurrentThreadName
 
 class Stack(
     private val handle: MemoryHandle,
     private val capacity: Int
 ) {
 
-    companion object Companion {
+    companion object {
         const val SIZE_BYTES = 64 * 1024
     }
 
@@ -39,7 +39,7 @@ class Stack(
 
 object StackManager {
 
-    private val stacks = Array(getMaxThreadCount()) {
+    private val stacks = Array(PlatformInfo.maxThreadCount) {
         Stack(
             handle = Heap.allocate(Stack.SIZE_BYTES),
             capacity = Stack.SIZE_BYTES
@@ -49,7 +49,7 @@ object StackManager {
     fun getStack(): Stack = stacks[getIndex()]
 
     private fun getIndex(): Int {
-        return (getCurrentThreadName().hashCode() and Int.MAX_VALUE) % stacks.size
+        return (PlatformInfo.fetchCurrentThreadName().hashCode() and Int.MAX_VALUE) % stacks.size
     }
 
 }

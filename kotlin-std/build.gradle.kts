@@ -1,47 +1,63 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.nmcp)
+    alias(libs.plugins.ksp)
     `maven-publish`
     signing
 }
 
 group = "io.github.cheerwizard"
-version = "1.0.2"
+version = "1.0.3"
 
 kotlin {
-    androidTarget {
-        publishLibraryVariants("release")
+    android {
+        namespace = "com.cws.std"
+        compileSdk = 37
+        minSdk = 26
+
+        withHostTest {}
+        withDeviceTest {}
     }
-    js(IR) {
-        browser {
-            binaries.library()
-        }
-        nodejs {
-            binaries.library()
-        }
-        compilerOptions {
-            // enable support of BigInt for Long
-            freeCompilerArgs.add("-Xir-per-module")
-            freeCompilerArgs.add("-Xuse-js-bigint-for-long")
-        }
-    }
+
     jvm("desktop")
+
+    js {
+        browser()
+    }
+
+    wasmJs {
+        browser()
+    }
+
+    mingwX64()
+    linuxX64()
+    macosArm64()
+
     iosArm64()
     iosX64()
     iosSimulatorArm64()
 
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
     sourceSets {
         val commonMain by getting {
+            kotlin.srcDirs(
+                "$buildDir/generated/commonMain/kotlin",
+                "build/generated/ksp/metadata/commonMain/kotlin",
+            )
+
             dependencies {
                 // Logger
-                api("io.github.cheerwizard:print-lib:1.0.0")
+                api("io.github.cheerwizard:print-lib:1.0.5")
                 // Standard
                 api(kotlin("stdlib-common"))
                 api(libs.kotlinx.atomicfu)
@@ -70,45 +86,55 @@ kotlin {
             dependsOn(jniMain)
         }
 
+        val webMain by creating {
+            dependsOn(commonMain)
+            dependencies {
+                api(libs.kotlinx.browser)
+            }
+        }
         val jsMain by getting {
+            dependsOn(webMain)
+        }
+        val wasmJsMain by getting {
+            dependsOn(webMain)
+        }
+
+        val iosMain by creating {
             dependsOn(commonMain)
         }
+        val iosX64Main by getting { dependsOn(iosMain) }
+        val iosArm64Main by getting { dependsOn(iosMain) }
+        val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
 
         val nativeMain by creating {
             dependsOn(commonMain)
         }
+        val mingwX64Main by getting { dependsOn(nativeMain) }
+        val linuxX64Main by getting { dependsOn(nativeMain) }
+        val macosArm64Main by getting { dependsOn(nativeMain) }
 
-        val iosX64Main by getting { dependsOn(nativeMain) }
-        val iosArm64Main by getting { dependsOn(nativeMain) }
-        val iosSimulatorArm64Main by getting { dependsOn(nativeMain) }
-    }
-}
+        // test source sets
 
-// TODO will need to find out how to fix it
-//project.extra["jniProject"] = "cmemory"
-//apply(from = "$rootDir/scripts/jni.gradle.kts")
-
-android {
-    namespace = "com.cws.std"
-    compileSdk = 34
-    ndkVersion = "27.3.13750724"
-
-    defaultConfig {
-        minSdk = 26
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
-        }
-        externalNativeBuild {
-            cmake {
-                cppFlags += "-std=c++17"
+        val androidHostTest by getting {
+            dependencies {
+                implementation(libs.robolectric)
+                implementation(libs.test.core)
             }
         }
-    }
 
-    externalNativeBuild {
-        cmake {
-            path = file("src/cpp/cmemory/CMakeLists.txt")
-        }
+        val webTest by creating { dependsOn(commonTest) }
+        val jsTest by getting { dependsOn(webTest) }
+        val wasmJsTest by getting { dependsOn(webTest) }
+
+        val iosTest by creating { dependsOn(commonTest) }
+        val iosX64Test by getting { dependsOn(iosTest) }
+        val iosArm64Test by getting { dependsOn(iosTest) }
+        val iosSimulatorArm64Test by getting { dependsOn(iosTest) }
+
+        val nativeTest by creating { dependsOn(commonTest) }
+        val mingwX64Test by getting { dependsOn(nativeTest) }
+        val linuxX64Test by getting { dependsOn(nativeTest) }
+        val macosArm64Test by getting { dependsOn(nativeTest) }
     }
 }
 
@@ -169,93 +195,231 @@ nmcp {
     }
 }
 
-// TODO: need to fix build here
-//val jniBuildDir = file("$buildDir/jni")
-//
-//fun cmakeTask(project: String): TaskProvider<Task?> {
-//    // Determine platform once during configuration
-//    val osName = System.getProperty("os.name").lowercase()
-//    val osArch = System.getProperty("os.arch").lowercase()
-//
-//    println("OS: $osName, Arch: $osArch")
-//
-//    val generator = when {
-//        osName.contains("windows") -> "Visual Studio 18 2026"
-//        osName.contains("linux") -> "Unix Makefiles"
-//        osName.contains("mac") -> "Unix Makefiles"
-//        else -> throw GradleException("Unsupported OS: $osName")
-//    }
-//
-//    val platform = when {
-//        osName.contains("win") && (osArch == "amd64" || osArch == "x86_64") -> "windows-x86_64"
-//        osName.contains("linux") && (osArch == "amd64" || osArch == "x86_64") -> "linux-x86_64"
-//        osName.contains("linux") && (osArch == "aarch64" || osArch == "arm64") -> "linux-arm64"
-//        osName.contains("mac") && (osArch == "x86_64") -> "macos-x86_64"
-//        osName.contains("mac") && (osArch == "aarch64" || osArch == "arm64") -> "macos-arm64"
-//        else -> throw GradleException("Unsupported platform: $osName / $osArch")
-//    }
-//
-//    return tasks.register("buildJni_$platform") {
-//        group = "jni"
-//        doLast {
-//            println("Running cmakeTask for platform:$platform project:$project")
-//
-//            val outDir = file( "$jniBuildDir/$platform")
-//            outDir.mkdirs()
-//
-//            val javaHome = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-21-openjdk-amd64"
-//
-//            val jniPlatformInclude = when(platform) {
-//                "linux-x86_64" -> "linux"
-//                "windows-x86_64" -> "win32"
-//                "macos-x86_64" -> "darwin"
-//                else -> throw GradleException("Unknown platform")
-//            }
-//
-//            val jniIncludeArgs = listOf(
-//                "-DCMAKE_BUILD_TYPE=Release",
-//                "-DJAVA_HOME=$javaHome",
-//                "-DCMAKE_INCLUDE_PATH=$javaHome/include;$javaHome/include/$jniPlatformInclude"
-//            )
-//
-//            exec {
-//                workingDir = outDir
-//                environment("JAVA_HOME", javaHome)
-//                println("Running cmake -G $generator")
-//                commandLine("cmake", "-G", generator, *jniIncludeArgs.toTypedArray(), "../../../src/cpp/$project")
-//            }
-//
-//            exec {
-//                workingDir = outDir
-//                environment("JAVA_HOME", javaHome)
-//                println("Running cmake --build .")
-//                commandLine("cmake", "--build", ".")
-//            }
-//
-//            val libName = when(platform) {
-//                "linux-x86_64" -> "lib$project.so"
-//                "windows-x86_64" -> "$project.dll"
-//                "macos-x86_64" -> "lib$project.dylib"
-//                else -> throw GradleException("Unknown platform")
-//            }
-//
-//            copy {
-//                val fromDir = if (osName.contains("win")) {
-//                    "$outDir/Debug/$libName"
-//                } else {
-//                    "$outDir/$libName"
-//                }
-//                val toDir = "src/desktopMain/resources/jni/$platform"
-//                println("Copying $fromDir -> $toDir")
-//                from(fromDir)
-//                into(toDir)
-//            }
-//        }
+sealed class JniTarget {
+    abstract val name: String
+    abstract val libraryName: (String) -> String
+    abstract val outputResourcePath: String
+
+    abstract fun configureArgs(javaHome: String): List<String>
+}
+
+data class DesktopJniTarget(
+    override val name: String,
+    val generator: String,
+    val jniInclude: String,
+    override val libraryName: (String) -> String,
+) : JniTarget() {
+    override val outputResourcePath = "src/desktopMain/resources/jni/$name"
+
+    override fun configureArgs(javaHome: String) = listOf(
+        "-G", generator,
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DJAVA_HOME=$javaHome",
+        "-DCMAKE_INCLUDE_PATH=$javaHome/include;$javaHome/include/$jniInclude",
+    )
+}
+
+data class AndroidJniTarget(
+    val abi: String,
+    val minSdk: Int = 26,
+    override val libraryName: (String) -> String = { "lib$it.so" },
+) : JniTarget() {
+    override val name = "android-$abi"
+    override val outputResourcePath = "src/androidMain/jniLibs/$abi"
+
+    override fun configureArgs(javaHome: String): List<String> {
+        val ndkHome = resolveNdkHome()
+
+        val toolchainFile = File(ndkHome, "build/cmake/android.toolchain.cmake")
+        if (!toolchainFile.exists()) {
+            throw GradleException("Android NDK toolchain file not found at $toolchainFile")
+        }
+
+        val ninjaPath = resolveNinjaPath()
+
+        return listOf(
+            "-G", "Ninja",
+            "-DCMAKE_MAKE_PROGRAM=$ninjaPath",
+            "-DCMAKE_TOOLCHAIN_FILE=${toolchainFile.absolutePath}",
+            "-DANDROID_ABI=$abi",
+            "-DANDROID_PLATFORM=android-$minSdk",
+            "-DCMAKE_BUILD_TYPE=Release",
+        )
+    }
+}
+
+fun registerCmakeTask(
+    projectName: String,
+    target: JniTarget,
+): TaskProvider<Task> {
+    val javaHome = System.getenv("JAVA_HOME")
+
+    val cmakePath = resolveSystemCmakePath()
+
+    val safeName = target.name.replaceFirstChar(Char::uppercase)
+        .replace("-", "")
+        .replace(Regex("[^A-Za-z0-9]"), "")
+
+    val outDir = layout.buildDirectory.dir("jni/${target.name}")
+
+    val configure = tasks.register<Exec>("configureJni$safeName") {
+        group = "jni"
+        doFirst { outDir.get().asFile.mkdirs() }
+        workingDir(outDir.get().asFile)
+        environment("JAVA_HOME", javaHome)
+        commandLine(listOf(cmakePath)
+                + target.configureArgs(javaHome)
+                + listOf(layout.projectDirectory.dir("src/cpp/$projectName").asFile.absolutePath)
+        )
+    }
+
+    val build = tasks.register<Exec>("buildNativeJni$safeName") {
+        group = "jni"
+        dependsOn(configure)
+        workingDir(outDir.get().asFile)
+        environment("JAVA_HOME", javaHome)
+        commandLine(cmakePath, "--build", ".")
+    }
+
+    val copy = tasks.register<Copy>("copyJni$safeName") {
+        group = "jni"
+        dependsOn(build)
+        from(outDir.map { it.file(target.libraryName(projectName)) })
+        into(layout.projectDirectory.dir(target.outputResourcePath))
+    }
+
+    return tasks.register("buildJni$safeName") {
+        group = "jni"
+        dependsOn(copy)
+    }
+}
+
+val desktopJniTargets = listOf(
+    DesktopJniTarget(name = "linuxX64", generator = "Unix Makefiles", jniInclude = "linux", libraryName = { "lib$it.so" }),
+    DesktopJniTarget(name = "macosArm64", generator = "Unix Makefiles", jniInclude = "darwin", libraryName = { "lib$it.dylib" }),
+    DesktopJniTarget(name = "mingwX64", generator = "Visual Studio 17 2022", jniInclude = "win32", libraryName = { "$it.dll" }),
+)
+
+val androidJniTargets = listOf(
+    AndroidJniTarget(abi = "arm64-v8a"),
+    AndroidJniTarget(abi = "x86_64"),
+)
+
+val allJniTargets: List<JniTarget> = desktopJniTargets + androidJniTargets
+
+val registeredTasks = allJniTargets.associateWith {
+    registerCmakeTask(projectName = "cmemory", target = it)
+}
+
+val currentHost: String get() = when {
+    org.gradle.internal.os.OperatingSystem.current().isLinux -> "linuxX64"
+    org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "macosArm64"
+    org.gradle.internal.os.OperatingSystem.current().isWindows -> "mingwX64"
+    else -> throw GradleException("Unsupported desktop OS")
+}
+
+tasks.register("buildJni") {
+    group = "jni"
+    dependsOn(registeredTasks.entries.first { it.key.name == currentHost }.value)
+}
+
+tasks.register("buildJniAndroid") {
+    group = "jni"
+    dependsOn(registeredTasks.filterKeys { it is AndroidJniTarget }.values)
+}
+
+fun Project.resolveNdkHome(): String {
+    // Return explicitly set variable
+    System.getenv("ANDROID_NDK_HOME")?.let { return it }
+
+    // Fallback to Android SDK locally installed on machine
+    val sdkDir = run {
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(localPropsFile.inputStream())
+        }
+        localProps.getProperty("sdk.dir") ?: System.getenv("ANDROID_HOME")
+    } ?: throw GradleException("Could not resolve Android SDK location (no local.properties sdk.dir or ANDROID_HOME)")
+
+    val ndkRoot = File(sdkDir, "ndk")
+    val ndkVersion = ndkRoot.listFiles()?.filter { it.isDirectory }?.maxByOrNull { it.name }
+        ?: throw GradleException("No NDK version found under $ndkRoot. Install one via Android Studio's SDK Manager.")
+
+    return ndkVersion.absolutePath
+}
+
+fun Project.resolveNinjaPath(): String {
+    val sdkDir = resolveSdkDir()
+    val cmakeRoot = File(sdkDir, "cmake")
+    val cmakeVersionDir = cmakeRoot.listFiles()?.filter { it.isDirectory }?.maxByOrNull { it.name }
+        ?: throw GradleException("No SDK-bundled CMake/Ninja found under $cmakeRoot. Install 'CMake' via SDK Manager.")
+    val ninja = File(cmakeVersionDir, "bin/ninja")
+    if (!ninja.exists()) throw GradleException("ninja binary not found at $ninja")
+    return ninja.absolutePath
+}
+
+fun Project.resolveSdkDir(): String {
+    // 1. local.properties (standard Android project convention)
+    val localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        val localProps = Properties()
+        localProps.load(localPropsFile.inputStream())
+        localProps.getProperty("sdk.dir")?.let { return it }
+    }
+
+    // 2. Environment variable fallback
+    System.getenv("ANDROID_HOME")?.let { return it }
+    System.getenv("ANDROID_SDK_ROOT")?.let { return it } // older/alternate env var some setups still use
+
+    throw GradleException(
+        "Could not resolve Android SDK location. Set 'sdk.dir' in local.properties, " +
+                "or export ANDROID_HOME / ANDROID_SDK_ROOT."
+    )
+}
+
+fun Project.resolveSystemCmakePath(): String {
+    // 1. Check if an environment variable specifies it directly
+    System.getenv("CMAKE_PATH")?.let { return it }
+
+    // 2. Check standard installation locations (especially for macOS Homebrew)
+    val commonPaths = listOf("/usr/local/bin/cmake", "/opt/homebrew/bin/cmake", "/usr/bin/cmake")
+    for (path in commonPaths) {
+        if (File(path).exists()) return path
+    }
+
+    // 3. Fallback to a shell evaluation query to find out where it is
+    try {
+        val process = ProcessBuilder("which", "cmake").start()
+        val path = process.inputStream.bufferedReader().readText().trim()
+        if (path.isNotEmpty() && File(path).exists()) return path
+    } catch (_: Exception) {}
+
+    // 4. Ultimate fallback if nothing else catches it
+    return "cmake"
+}
+
+// Code generation configuration
+
+dependencies {
+    add("kspCommonMainMetadata", project(":kotlin-std-gen"))
+}
+
+//tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+//    if (name != "kspCommonMainKotlinMetadata") {
+//        dependsOn("kspCommonMainKotlinMetadata")
 //    }
 //}
 //
-//val cmakeBuild = cmakeTask("cmemory")
-//
-//tasks.register("kotlin-std_buildJni") {
-//    dependsOn(cmakeBuild)
+//afterEvaluate {
+//    listOf(
+//        "compileKotlinIosArm64",
+//        "compileKotlinIosSimulatorArm64",
+//        "compileKotlinIosX64",
+//        "kspKotlinIosArm64",
+//        "kspKotlinIosSimulatorArm64",
+//        "kspKotlinIosX64",
+//    ).forEach { taskName ->
+//        tasks.findByName(taskName)?.dependsOn("kspCommonMainKotlinMetadata")
+//    }
 //}

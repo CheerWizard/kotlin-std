@@ -4,69 +4,124 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.ShortBuffer
 
-actual open class NativeBuffer actual constructor(
+actual class NativeBuffer actual constructor(
     capacity: Int,
     memoryLayout: MemoryLayout,
     endian: Endian,
+    memoryBoundary: MemoryBoundary,
 ) {
 
+    actual var memoryBoundary: MemoryBoundary = memoryBoundary
+        private set
     actual val memoryLayout: MemoryLayout = memoryLayout
     actual val endian: Endian = endian
 
-    constructor(buffer: ByteBuffer) : this(buffer.capacity()) {
-        this.buffer = buffer
-    }
-
-    actual constructor(address: Long, capacity: Int, memoryLayout: MemoryLayout, endian: Endian) : this(capacity, memoryLayout, endian) {
-        this.buffer = ByteBuffer.allocateDirect(capacity)
+    actual constructor(
+        address: Long,
+        capacity: Int,
+        memoryLayout: MemoryLayout,
+        endian: Endian
+    ) : this(capacity, memoryLayout, endian, MemoryBoundary.EXTERNAL) {
+        this.buffer = CMemory.toByteBuffer(address, capacity)?.order(endian.toByteOrder())
             ?: throw RuntimeException("Failed to allocate for NativeBuffer $capacity bytes from address $address")
     }
 
-    var buffer: ByteBuffer = ByteBuffer.allocateDirect(capacity)
-        ?: throw RuntimeException("Failed to allocate for NativeBuffer $capacity bytes")
+    actual constructor(
+        buffer: ByteArray,
+        memoryLayout: MemoryLayout,
+        endian: Endian
+    ) : this(buffer.size, memoryLayout, endian, MemoryBoundary.KOTLIN_HEAP) {
+        this.buffer = ByteBuffer.wrap(buffer).order(endian.toByteOrder())
+    }
 
-    //    actual val address: Long = CMemory.addressOf(buffer)
-    actual val address: Long = 0
+    var buffer: ByteBuffer = if (isHeapBoundary(capacity)) {
+        ByteBuffer.allocate(capacity).order(endian.toByteOrder())
+    } else {
+        CMemory.malloc(capacity)?.order(endian.toByteOrder())
+            ?: throw RuntimeException("Failed to allocate for NativeBuffer $capacity bytes")
+    }
+
+    actual val address: Long = if (isHeapBoundary(capacity)) 0L else CMemory.addressOf(buffer)
 
     actual var position: Int
-        set(value) {
+        internal set(value) {
             buffer.position(value)
         }
         get() = buffer.position()
 
-    actual val capacity: Int get() = buffer.capacity()
+    actual var limit: Int get() = buffer.limit()
+        private set(value) {
+            buffer.limit(value)
+        }
+
     val size: Int get() = buffer.remaining()
 
     actual fun release() {
-//        CMemory.free(buffer)
+        if (!isHeapBoundary()) {
+            CMemory.free(buffer)
+        }
     }
 
-    actual fun view(): Any = buffer
+    actual fun view(): Any? = buffer
 
     actual fun resize(newCapacity: Int) {
-        buffer = ByteBuffer.allocateDirect(newCapacity)
-            ?: throw RuntimeException("Failed to reallocate for NativeBuffer $newCapacity bytes")
+        val capacity = buffer.capacity()
+        val oldPosition = position
+        when {
+            newCapacity <= limit || newCapacity <= capacity -> buffer.limit(newCapacity)
+            isHeapBoundary() && isHeapBoundary(newCapacity) -> {
+                buffer = ByteBuffer
+                    .wrap(buffer.array().copyOf(newCapacity))
+                    .order(endian.toByteOrder())
+                memoryBoundary = MemoryBoundary.KOTLIN_HEAP
+            }
+            !isHeapBoundary() && !isHeapBoundary(newCapacity) -> {
+                buffer = CMemory.realloc(buffer, newCapacity)
+                    ?.order(endian.toByteOrder())
+                    ?: throw RuntimeException("CMemory.realloc failed to resize NativeBuffer to new capacity $newCapacity")
+                memoryBoundary = MemoryBoundary.EXTERNAL
+            }
+            isHeapBoundary() && !isHeapBoundary(newCapacity) -> {
+                val newBuffer = CMemory.malloc(newCapacity)
+                    ?.order(endian.toByteOrder())
+                    ?: throw RuntimeException("CMemory.malloc failed to malloc new NativeBuffer during resize to $newCapacity")
+                newBuffer.put(buffer.array())
+                buffer = newBuffer
+                memoryBoundary = MemoryBoundary.EXTERNAL
+            }
+            !isHeapBoundary() && isHeapBoundary(newCapacity) -> {
+                val newBuffer = ByteBuffer.allocate(newCapacity)
+                    .order(endian.toByteOrder())
+                newBuffer.put(buffer.duplicate())
+                CMemory.free(buffer)
+                buffer = newBuffer
+                memoryBoundary = MemoryBoundary.KOTLIN_HEAP
+            }
+        }
+        position = minOf(oldPosition, newCapacity)
     }
 
     actual fun copyTo(
         dest: NativeBuffer,
         srcIndex: Int,
         destIndex: Int,
-        size: Int,
+        sizeBytes: Int,
     ) {
-        val srcSlice = buffer.duplicate()
-        srcSlice.position(srcIndex)
-        srcSlice.limit(srcIndex + size)
-        val destLastPosition = dest.position
-        dest.position = destIndex
-        dest.buffer.put(srcSlice)
-        dest.position = destLastPosition
+        val src = buffer.duplicate()
+        src.position(srcIndex)
+        src.limit(srcIndex + sizeBytes)
+
+        val dst = dest.buffer.duplicate()
+        dst.position(destIndex)
+
+        dst.put(src)
     }
 
     actual fun setByteArray(index: Int, array: ByteArray) {
         val oldPosition = buffer.position()
         try {
-            buffer.position(index).put(array)
+            buffer.position(index)
+            buffer.put(array)
         } finally {
             buffer.position(oldPosition)
         }
@@ -75,7 +130,8 @@ actual open class NativeBuffer actual constructor(
     actual fun setCharArray(index: Int, array: CharArray) {
         val oldPosition = buffer.position()
         try {
-            buffer.position(index).asCharBuffer().put(array)
+            buffer.position(index)
+            buffer.asCharBuffer().put(array)
         } finally {
             buffer.position(oldPosition)
         }
@@ -84,7 +140,8 @@ actual open class NativeBuffer actual constructor(
     actual fun setShortArray(index: Int, array: ShortArray) {
         val oldPosition = buffer.position()
         try {
-            buffer.position(index).asShortBuffer().put(array)
+            buffer.position(index)
+            buffer.asShortBuffer().put(array)
         } finally {
             buffer.position(oldPosition)
         }
@@ -93,7 +150,8 @@ actual open class NativeBuffer actual constructor(
     actual fun setIntArray(index: Int, array: IntArray) {
         val oldPosition = buffer.position()
         try {
-            buffer.position(index).asIntBuffer().put(array)
+            buffer.position(index)
+            buffer.asIntBuffer().put(array)
         } finally {
             buffer.position(oldPosition)
         }
@@ -102,7 +160,8 @@ actual open class NativeBuffer actual constructor(
     actual fun setFloatArray(index: Int, array: FloatArray) {
         val oldPosition = buffer.position()
         try {
-            buffer.position(index).asFloatBuffer().put(array)
+            buffer.position(index)
+            buffer.asFloatBuffer().put(array)
         } finally {
             buffer.position(oldPosition)
         }
@@ -111,7 +170,8 @@ actual open class NativeBuffer actual constructor(
     actual fun setLongArray(index: Int, array: LongArray) {
         val oldPosition = buffer.position()
         try {
-            buffer.position(index).asLongBuffer().put(array)
+            buffer.position(index)
+            buffer.asLongBuffer().put(array)
         } finally {
             buffer.position(oldPosition)
         }
@@ -120,18 +180,15 @@ actual open class NativeBuffer actual constructor(
     actual fun setDoubleArray(index: Int, array: DoubleArray) {
         val oldPosition = buffer.position()
         try {
-            buffer.position(index).asDoubleBuffer().put(array)
+            buffer.position(index)
+            buffer.asDoubleBuffer().put(array)
         } finally {
             buffer.position(oldPosition)
         }
     }
 
-    actual fun clone(): NativeBuffer {
-        return NativeBuffer(capacity)
-    }
-
-    actual fun setTo(value: Byte, destIndex: Int, size: Int) {
-        repeat(size) { i -> buffer.put(destIndex + i, value) }
+    actual fun setTo(value: Byte, destIndex: Int, sizeBytes: Int) {
+        repeat(sizeBytes) { i -> buffer.put(destIndex + i, value) }
     }
 
     actual fun setByte(index: Int, value: Byte) {
@@ -144,77 +201,71 @@ actual open class NativeBuffer actual constructor(
         buffer.asShortBuffer().put(shortBuffer)
     }
 
-    actual fun copyToByteArray(array: ByteArray, offset: Int, size: Int): ByteArray {
-        buffer.duplicate()
-            .position(offset)
-            .limit(offset + size)
-            .get(array)
+    actual fun copyToByteArray(array: ByteArray, offset: Int, sizeBytes: Int): ByteArray {
+        val dup = buffer.duplicate()
+        dup.position(offset)
+        dup.limit(offset + sizeBytes * Byte.sizeBytes(MemoryLayout.KOTLIN))
+        dup.get(array)
         return array
     }
 
-    actual fun copyToCharArray(array: CharArray, offset: Int, size: Int): CharArray {
-        buffer.duplicate()
-            .position(offset)
-            .limit(offset + size)
-            .slice()
-            .order(endian.toByteOrder())
-            .asCharBuffer()
-            .get(array)
+    actual fun copyToCharArray(array: CharArray, offset: Int, sizeBytes: Int): CharArray {
+        val dup = buffer.duplicate()
+        dup.position(offset)
+        dup.limit(offset + sizeBytes * Char.sizeBytes(MemoryLayout.KOTLIN))
+        val sliced = dup.slice()
+        sliced.order(endian.toByteOrder())
+        sliced.asCharBuffer().get(array)
         return array
     }
 
-    actual fun copyToShortArray(array: ShortArray, offset: Int, size: Int): ShortArray {
-        buffer.duplicate()
-            .position(offset)
-            .limit(offset + size)
-            .slice()
-            .order(endian.toByteOrder())
-            .asShortBuffer()
-            .get(array)
+    actual fun copyToShortArray(array: ShortArray, offset: Int, sizeBytes: Int): ShortArray {
+        val dup = buffer.duplicate()
+        dup.position(offset)
+        dup.limit(offset + sizeBytes * Short.sizeBytes(MemoryLayout.KOTLIN))
+        val sliced = dup.slice()
+        sliced.order(endian.toByteOrder())
+        sliced.asShortBuffer().get(array)
         return array
     }
 
-    actual fun copyToIntArray(array: IntArray, offset: Int, size: Int): IntArray {
-        buffer.duplicate()
-            .position(offset)
-            .limit(offset + size)
-            .slice()
-            .order(endian.toByteOrder())
-            .asIntBuffer()
-            .get(array)
+    actual fun copyToIntArray(array: IntArray, offset: Int, sizeBytes: Int): IntArray {
+        val dup = buffer.duplicate()
+        dup.position(offset)
+        dup.limit(offset + sizeBytes * Int.sizeBytes(MemoryLayout.KOTLIN))
+        val sliced = dup.slice()
+        sliced.order(endian.toByteOrder())
+        sliced.asIntBuffer().get(array)
         return array
     }
 
-    actual fun copyToFloatArray(array: FloatArray, offset: Int, size: Int): FloatArray {
-        buffer.duplicate()
-            .position(offset)
-            .limit(offset + size)
-            .slice()
-            .order(endian.toByteOrder())
-            .asFloatBuffer()
-            .get(array)
+    actual fun copyToFloatArray(array: FloatArray, offset: Int, sizeBytes: Int): FloatArray {
+        val dup = buffer.duplicate()
+        dup.position(offset)
+        dup.limit(offset + sizeBytes * Float.sizeBytes(MemoryLayout.KOTLIN))
+        val sliced = dup.slice()
+        sliced.order(endian.toByteOrder())
+        sliced.asFloatBuffer().get(array)
         return array
     }
 
-    actual fun copyToLongArray(array: LongArray, offset: Int, size: Int): LongArray {
-        buffer.duplicate()
-            .position(offset)
-            .limit(offset + size)
-            .slice()
-            .order(endian.toByteOrder())
-            .asLongBuffer()
-            .get(array)
+    actual fun copyToLongArray(array: LongArray, offset: Int, sizeBytes: Int): LongArray {
+        val dup = buffer.duplicate()
+        dup.position(offset)
+        dup.limit(offset + sizeBytes * Long.sizeBytes(MemoryLayout.KOTLIN))
+        val sliced = dup.slice()
+        sliced.order(endian.toByteOrder())
+        sliced.asLongBuffer().get(array)
         return array
     }
 
-    actual fun copyToDoubleArray(array: DoubleArray, offset: Int, size: Int): DoubleArray {
-        buffer.duplicate()
-            .position(offset)
-            .limit(offset + size)
-            .slice()
-            .order(endian.toByteOrder())
-            .asDoubleBuffer()
-            .get(array)
+    actual fun copyToDoubleArray(array: DoubleArray, offset: Int, sizeBytes: Int): DoubleArray {
+        val dup = buffer.duplicate()
+        dup.position(offset)
+        dup.limit(offset + sizeBytes * Double.sizeBytes(MemoryLayout.KOTLIN))
+        val sliced = dup.slice()
+        sliced.order(endian.toByteOrder())
+        sliced.asDoubleBuffer().get(array)
         return array
     }
 

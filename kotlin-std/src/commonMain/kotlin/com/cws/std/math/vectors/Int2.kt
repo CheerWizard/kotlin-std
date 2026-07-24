@@ -9,12 +9,6 @@ data class Int2(
     var y: Int = 0
 ) {
 
-    companion object {
-        val SIZE_BYTES = Int.SIZE_BYTES * 2
-        val STD140_SIZE_BYTES = Int.STD140_SIZE_BYTES * 2
-        val STD430_SIZE_BYTES = Int.STD430_SIZE_BYTES * 2
-    }
-
     operator fun get(i: Int): Int {
         return when (i) {
             0 -> x

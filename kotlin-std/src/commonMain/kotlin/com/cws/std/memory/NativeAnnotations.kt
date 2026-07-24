@@ -10,11 +10,6 @@ annotation class NativeData
 @Retention(AnnotationRetention.SOURCE)
 annotation class NativeEnum
 
-// use this annotation to declare new message in Kotlin/C++ bridge protocol
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.SOURCE)
-annotation class NativeMessage
-
 // use this annotation for fixed size data types, like static arrays or static string
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.SOURCE)

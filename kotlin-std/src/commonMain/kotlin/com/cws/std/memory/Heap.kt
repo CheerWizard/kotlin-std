@@ -1,5 +1,6 @@
 package com.cws.std.memory
 
+import com.cws.std.platform.PlatformInfo
 import kotlin.math.min
 
 class FreeBlocks(size: Int) {
@@ -33,11 +34,11 @@ class FreeBlocks(size: Int) {
 
 }
 
-object Heap : NativeBuffer(
-    capacity = getMemorySize(10f),
-) {
+object Heap {
 
-    val totalSize get() = capacity
+    private val buffer = NativeBuffer(PlatformInfo.getMemorySize(10f))
+
+    val totalSize get() = buffer.limit
 
     val freeSize get() = totalSize - usedSize
 
@@ -56,17 +57,17 @@ object Heap : NativeBuffer(
             return freeHandle
         }
 
-        val handle = position
-        val capacity = capacity
+        val handle = buffer.position
+        val capacity = buffer.limit
         if (handle == capacity) {
-            resize(capacity * 2)
+            buffer.resize(capacity * 2)
         }
 
         reset(handle, size)
 
         allocations++
         usedSize += size
-        position = handle + size
+//        buffer.position = handle + size
 
         return handle
     }
@@ -78,11 +79,11 @@ object Heap : NativeBuffer(
     }
 
     fun reset(handle: MemoryHandle, size: Int) {
-        setTo(0, handle, size)
+        buffer.setTo(0, handle, size)
     }
 
     private fun initCapacity(): Long {
-        val capacity = (getMemoryInfo().totalPhysicalSize * 0.10f).toLong()
+        val capacity = (PlatformInfo.memoryInfo.totalPhysicalSize * 0.10f).toLong()
         return min(capacity, Int.MAX_VALUE.toLong())
     }
 

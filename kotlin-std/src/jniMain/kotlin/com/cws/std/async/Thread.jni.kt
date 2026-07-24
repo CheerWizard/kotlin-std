@@ -7,14 +7,14 @@ actual open class Thread actual constructor(
     start: Boolean,
     actual val name: String,
     actual val priority: Int,
-    task: Task,
+    task: () -> Unit,
 ) {
 
     private val thread = thread(
         start = start,
         name = name,
         priority = priority,
-        block = task.action,
+        block = task,
     )
 
     actual fun start() {
@@ -25,8 +25,3 @@ actual open class Thread actual constructor(
         thread.join()
     }
 }
-
-actual fun getCurrentThreadName(): String = Thread.currentThread().name
-actual fun getMaxThreadCount(): Int = Runtime.getRuntime().availableProcessors() * 2
-actual fun getCurrentThreadId(): Int = Thread.currentThread().id.toInt()
-actual fun getCurrentProcessId(): Int = ProcessHandle.current().pid().toInt()

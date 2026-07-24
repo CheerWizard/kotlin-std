@@ -4,7 +4,7 @@ expect open class Thread(
     start: Boolean = false,
     name: String,
     priority: Int,
-    task: Task,
+    task: () -> Unit,
 ) {
     val name: String
     val priority: Int
@@ -12,8 +12,3 @@ expect open class Thread(
     fun start()
     fun join()
 }
-
-expect fun getCurrentThreadName(): String
-expect fun getMaxThreadCount(): Int
-expect fun getCurrentThreadId(): Int
-expect fun getCurrentProcessId(): Int

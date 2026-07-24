@@ -9,12 +9,6 @@ data class UInt2(
     var y: UInt = 0u
 ) {
 
-    companion object {
-        val SIZE_BYTES = UInt.SIZE_BYTES * 2
-        val STD140_SIZE_BYTES = UInt.STD140_SIZE_BYTES * 2
-        val STD430_SIZE_BYTES = UInt.STD430_SIZE_BYTES * 2
-    }
-
     operator fun get(i: UInt): UInt {
         return when (i) {
             0u -> x

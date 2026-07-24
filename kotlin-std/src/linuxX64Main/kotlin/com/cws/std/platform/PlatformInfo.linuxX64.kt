@@ -1,0 +1,72 @@
+@file:OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
+
+package com.cws.std.platform
+
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.toKString
+import platform.posix.closedir
+import platform.posix.fclose
+import platform.posix.fgets
+import platform.posix.fopen
+import platform.posix.getpid
+import platform.posix.opendir
+import platform.posix.pthread_self
+import platform.posix.readdir
+import kotlin.experimental.ExperimentalNativeApi
+
+actual fun PlatformInfo.fetchMemoryInfo(): MemoryInfo {
+    val file = fopen("/proc/meminfo", "r")
+        ?: return MemoryInfo(
+            totalHeapSize = 0L,
+            freeHeapSize = 0L,
+            totalPhysicalSize = 0L,
+            freePhysicalSize = 0L,
+        )
+
+    var totalKb = 0L
+    var freeKb = 0L
+
+    try {
+        memScoped {
+            val line = allocArray<ByteVar>(256)
+            while (fgets(line, 256, file) != null) {
+                val text = line.toKString()
+                when {
+                    text.startsWith("MemTotal:") -> totalKb = text.filter { it.isDigit() }.toLong()
+                    text.startsWith("MemAvailable:") -> freeKb = text.filter { it.isDigit() }.toLong()
+                }
+            }
+        }
+    } finally { fclose(file) }
+
+    return MemoryInfo(
+        totalPhysicalSize = totalKb * 1000,
+        freePhysicalSize = freeKb * 1000,
+        totalHeapSize = totalKb * 1000,
+        freeHeapSize = freeKb * 1000,
+    )
+}
+
+actual fun PlatformInfo.fetchCurrentProcessId(): Int = getpid()
+
+actual fun PlatformInfo.fetchCurrentThreadId(): Int = pthread_self().toInt()
+
+actual fun PlatformInfo.fetchCurrentThreadName(): String {
+    val file = fopen("/proc/thread-self/comm", "r") ?: return ""
+    return try {
+        memScoped {
+            val name = allocArray<ByteVar>(64)
+            fgets(name, 64, file)
+            name.toKString().trim()
+        }
+    } catch (_: Throwable) {
+        ""
+    } finally {
+        fclose(file)
+    }
+}
+
+actual fun PlatformInfo.fetchMaxThreadCount(): Int = maxOf(1, Platform.getAvailableProcessors() - 1)

@@ -1,6 +1,6 @@
 package com.cws.std.storage
 
-interface Preferences {
+expect class Preferences {
 
     fun setByte(key: String, value: Byte)
     fun setBoolean(key: String, value: Boolean)

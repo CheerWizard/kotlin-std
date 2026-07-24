@@ -10,12 +10,6 @@ data class Int3(
     var z: Int = 0,
 ) {
 
-    companion object {
-        val SIZE_BYTES = Int.SIZE_BYTES * 3
-        val STD140_SIZE_BYTES = Int.STD140_SIZE_BYTES * 3
-        val STD430_SIZE_BYTES = Int.STD430_SIZE_BYTES * 3
-    }
-
     operator fun get(i: Int): Int {
         return when (i) {
             0 -> x

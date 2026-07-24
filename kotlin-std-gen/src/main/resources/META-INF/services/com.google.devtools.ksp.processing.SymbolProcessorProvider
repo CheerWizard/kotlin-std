@@ -1,2 +1,1 @@
-com.cws.kotlin.std.gen.NativeProcessorProvider
-com.cws.kotlin.std.gen.NativeDataProcessorProvider
+com.cws.std.gen.NativeProcessorProvider

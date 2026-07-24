@@ -1,0 +1,189 @@
+package com.cws.std.memory
+
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+
+class NativeBufferVariableArrayTest {
+
+    @Test
+    fun `byte array round trip`() {
+        testByteArray(null)
+        testByteArray(byteArrayOf())
+        testByteArray(byteArrayOf(42))
+        testByteArray(byteArrayOf(1, 2, 3, 4, 5))
+    }
+
+    @Test
+    fun `short array round trip`() {
+        testShortArray(null)
+        testShortArray(shortArrayOf())
+        testShortArray(shortArrayOf(42))
+        testShortArray(shortArrayOf(1, -2, 3, Short.MAX_VALUE))
+    }
+
+    @Test
+    fun `int array round trip`() {
+        testIntArray(null)
+        testIntArray(intArrayOf())
+        testIntArray(intArrayOf(42))
+        testIntArray(intArrayOf(1, -2, 3, Int.MAX_VALUE))
+    }
+
+    @Test
+    fun `long array round trip`() {
+        testLongArray(null)
+        testLongArray(longArrayOf())
+        testLongArray(longArrayOf(42))
+        testLongArray(longArrayOf(1, -2, 3, Long.MAX_VALUE))
+    }
+
+    @Test
+    fun `float array round trip`() {
+        testFloatArray(null)
+        testFloatArray(floatArrayOf())
+        testFloatArray(floatArrayOf(42f))
+        testFloatArray(floatArrayOf(1f, -2.5f, Float.NaN, Float.POSITIVE_INFINITY))
+    }
+
+    @Test
+    fun `double array round trip`() {
+        testDoubleArray(null)
+        testDoubleArray(doubleArrayOf())
+        testDoubleArray(doubleArrayOf(42.0))
+        testDoubleArray(doubleArrayOf(1.0, -2.5, Double.NaN, Double.NEGATIVE_INFINITY))
+    }
+
+    private fun testByteArray(values: ByteArray?) =
+        forEachConfiguration { layout, _, buffer ->
+
+            val expected = values ?: ByteArray(0)
+
+            buffer.pushByteArray(values)
+
+            assertEquals(
+                Int.sizeBytes(layout) + expected.sizeBytes(layout),
+                buffer.position
+            )
+
+            buffer.flip()
+
+            assertContentEquals(
+                expected,
+                buffer.nextByteArray()
+            )
+
+            assertEquals(buffer.limit.coerceAtLeast(0), buffer.limit) // keep buffer referenced
+            buffer.release()
+        }
+
+    private fun testShortArray(values: ShortArray?) =
+        forEachConfiguration { layout, _, buffer ->
+
+            val expected = values ?: ShortArray(0)
+
+            buffer.pushShortArray(values)
+
+            assertEquals(
+                Int.sizeBytes(layout) + expected.sizeBytes(layout),
+                buffer.position
+            )
+
+            buffer.flip()
+
+            assertContentEquals(
+                expected,
+                buffer.nextShortArray()
+            )
+
+            buffer.release()
+        }
+
+    private fun testIntArray(values: IntArray?) =
+        forEachConfiguration { layout, _, buffer ->
+
+            val expected = values ?: IntArray(0)
+
+            buffer.pushIntArray(values)
+
+            assertEquals(
+                Int.sizeBytes(layout) + expected.sizeBytes(layout),
+                buffer.position
+            )
+
+            buffer.flip()
+
+            assertContentEquals(
+                expected,
+                buffer.nextIntArray()
+            )
+
+            buffer.release()
+        }
+
+    private fun testLongArray(values: LongArray?) =
+        forEachConfiguration { layout, _, buffer ->
+
+            val expected = values ?: LongArray(0)
+
+            buffer.pushLongArray(values)
+
+            assertEquals(
+                Int.sizeBytes(layout) + expected.sizeBytes(layout),
+                buffer.position
+            )
+
+            buffer.flip()
+
+            assertContentEquals(
+                expected,
+                buffer.nextLongArray()
+            )
+
+            buffer.release()
+        }
+
+    private fun testFloatArray(values: FloatArray?) =
+        forEachConfiguration { layout, _, buffer ->
+
+            val expected = values ?: FloatArray(0)
+
+            buffer.pushFloatArray(values)
+
+            assertEquals(
+                Int.sizeBytes(layout) + expected.sizeBytes(layout),
+                buffer.position
+            )
+
+            buffer.flip()
+
+            assertFloatArrayEquals(
+                expected,
+                buffer.nextFloatArray()
+            )
+
+            buffer.release()
+        }
+
+    private fun testDoubleArray(values: DoubleArray?) =
+        forEachConfiguration { layout, _, buffer ->
+
+            val expected = values ?: DoubleArray(0)
+
+            buffer.pushDoubleArray(values)
+
+            assertEquals(
+                Int.sizeBytes(layout) + expected.sizeBytes(layout),
+                buffer.position
+            )
+
+            buffer.flip()
+
+            assertDoubleArrayEquals(
+                expected,
+                buffer.nextDoubleArray()
+            )
+
+            buffer.release()
+        }
+}

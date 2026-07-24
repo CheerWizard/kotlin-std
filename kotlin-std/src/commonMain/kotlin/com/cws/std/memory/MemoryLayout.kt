@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package com.cws.std.memory
 
 enum class MemoryLayout {
@@ -18,10 +20,10 @@ val UShort.Companion.STD140_SIZE_BYTES: Int get() = 4
 val Char.Companion.STD140_SIZE_BYTES: Int get() = 4
 val Int.Companion.STD140_SIZE_BYTES: Int get() = 4
 val UInt.Companion.STD140_SIZE_BYTES: Int get() = 4
-val Long.Companion.STD140_SIZE_BYTES: Int get() = 4
-val ULong.Companion.STD140_SIZE_BYTES: Int get() = 4
+val Long.Companion.STD140_SIZE_BYTES: Int get() = 8
+val ULong.Companion.STD140_SIZE_BYTES: Int get() = 8
 val Float.Companion.STD140_SIZE_BYTES: Int get() = 4
-val Double.Companion.STD140_SIZE_BYTES: Int get() = 4
+val Double.Companion.STD140_SIZE_BYTES: Int get() = 8
 
 // STD 430 alignment
 val Boolean.Companion.STD430_SIZE_BYTES: Int get() = 4
@@ -32,10 +34,10 @@ val UShort.Companion.STD430_SIZE_BYTES: Int get() = 4
 val Char.Companion.STD430_SIZE_BYTES: Int get() = 4
 val Int.Companion.STD430_SIZE_BYTES: Int get() = 4
 val UInt.Companion.STD430_SIZE_BYTES: Int get() = 4
-val Long.Companion.STD430_SIZE_BYTES: Int get() = 4
-val ULong.Companion.STD430_SIZE_BYTES: Int get() = 4
+val Long.Companion.STD430_SIZE_BYTES: Int get() = 8
+val ULong.Companion.STD430_SIZE_BYTES: Int get() = 8
 val Float.Companion.STD430_SIZE_BYTES: Int get() = 4
-val Double.Companion.STD430_SIZE_BYTES: Int get() = 4
+val Double.Companion.STD430_SIZE_BYTES: Int get() = 8
 
 fun Boolean.Companion.sizeBytes(layout: MemoryLayout) = when (layout) {
     MemoryLayout.KOTLIN -> Boolean.SIZE_BYTES
@@ -110,9 +112,14 @@ fun Double.Companion.sizeBytes(layout: MemoryLayout) = when (layout) {
 }
 
 fun ByteArray.sizeBytes(layout: MemoryLayout) = size * Byte.sizeBytes(layout)
+fun UByteArray.sizeBytes(layout: MemoryLayout) = size * UByte.sizeBytes(layout)
 fun ShortArray.sizeBytes(layout: MemoryLayout) = size * Short.sizeBytes(layout)
+fun UShortArray.sizeBytes(layout: MemoryLayout) = size * UShort.sizeBytes(layout)
+fun CharArray.sizeBytes(layout: MemoryLayout) = size * Char.sizeBytes(layout)
 fun IntArray.sizeBytes(layout: MemoryLayout) = size * Int.sizeBytes(layout)
+fun UIntArray.sizeBytes(layout: MemoryLayout) = size * UInt.sizeBytes(layout)
 fun LongArray.sizeBytes(layout: MemoryLayout) = size * Long.sizeBytes(layout)
+fun ULongArray.sizeBytes(layout: MemoryLayout) = size * ULong.sizeBytes(layout)
 fun FloatArray.sizeBytes(layout: MemoryLayout) = size * Float.sizeBytes(layout)
 fun DoubleArray.sizeBytes(layout: MemoryLayout) = size * Double.sizeBytes(layout)
 fun String.sizeBytesUtf8(layout: MemoryLayout) = length * Byte.sizeBytes(layout)
