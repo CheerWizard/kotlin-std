@@ -410,6 +410,7 @@ afterEvaluate {
         "compileKotlinIosSimulatorArm64",
         "compileKotlinIosX64",
         "compileKotlinDesktop",
+        "compileAndroidMain",
         "kspKotlinIosArm64",
         "kspKotlinIosSimulatorArm64",
         "kspKotlinIosX64",
