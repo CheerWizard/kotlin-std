@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(ExperimentalForeignApi::class)
 package com.cws.std.io
 
 import kotlinx.cinterop.CPointer
@@ -43,11 +44,12 @@ private fun FileMode.toNativeFileMode(): String =
         FileMode.CREATE_IF_NOT_EXIST -> "a+"
     }
 
-@OptIn(ExperimentalForeignApi::class)
 actual class File actual constructor(
     private val filepath: String,
     private val mode: FileMode,
 ) : AutoCloseable {
+
+    @OptIn(UnsafeNumber::class)
     actual val size: Int get() {
         val f = file ?: return 0
         val current = ftell(f)
