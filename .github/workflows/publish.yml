@@ -26,6 +26,9 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: SpotlessCheck
+        run: ./gradlew spotlessCheck
+
       - name: Publish
         run: ./gradlew :kotlin-std:publishAllPublicationsToCentralPortal
         env:

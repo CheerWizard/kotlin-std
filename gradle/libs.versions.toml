@@ -11,6 +11,7 @@ kotlinxBrowserVersion = "0.5.0"
 robolectric = "4.16.1"
 ksp = "2.3.8"
 kotlinpoet = "2.3.0"
+spotless = "8.8.0"
 
 [libraries]
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
@@ -32,3 +33,4 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 nmcp = { id = "com.gradleup.nmcp", version = "1.6.1" }
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

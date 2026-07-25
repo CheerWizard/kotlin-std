@@ -13,13 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(ExperimentalForeignApi::class)
-package com.cws.std.storage
-
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.toKString
-import platform.posix.getenv
-import kotlin.experimental.ExperimentalNativeApi
-
-internal actual fun getPreferencesFilepath(name: String): String =
-    "${getenv("HOME")!!.toKString()}/Library/Application Support/$name/preferences.json"

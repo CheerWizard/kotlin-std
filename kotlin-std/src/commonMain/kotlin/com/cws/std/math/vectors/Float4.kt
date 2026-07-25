@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.math.vectors
 
 import com.cws.std.math.matrices.Mat4
@@ -9,25 +24,24 @@ data class Float4(
     var z: Float = 0f,
     var w: Float = 0f,
 ) {
-
-    operator fun get(i: Int): Float {
-        return when (i) {
+    operator fun get(i: Int): Float =
+        when (i) {
             0 -> x
             1 -> y
             2 -> z
             3 -> w
             else -> throw IndexOutOfBoundsException("i=$i out of range [0, 3]")
         }
-    }
 
-    operator fun set(i: Int, v: Float) {
-        return when (i) {
-            0 -> x = v
-            1 -> y = v
-            2 -> z = v
-            3 -> w = v
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 3]")
-        }
+    operator fun set(
+        i: Int,
+        v: Float,
+    ) = when (i) {
+        0 -> x = v
+        1 -> y = v
+        2 -> z = v
+        3 -> w = v
+        else -> throw IndexOutOfBoundsException("i=$i out of range [0, 3]")
     }
 
     val length: Float get() {
@@ -38,62 +52,57 @@ data class Float4(
         return sqrt(x * x + y * y + z * z + w * w)
     }
 
-    operator fun plus(v: Float): Float4 {
-        return Float4(x + v, y + v, z + v, w + v)
-    }
+    operator fun plus(v: Float): Float4 = Float4(x + v, y + v, z + v, w + v)
 
-    operator fun minus(v: Float): Float4 {
-        return Float4(x - v, y - v, z - v, w - v)
-    }
+    operator fun minus(v: Float): Float4 = Float4(x - v, y - v, z - v, w - v)
 
-    operator fun times(v: Float): Float4 {
-        return Float4(x * v, y * v, z * v, w * v)
-    }
+    operator fun times(v: Float): Float4 = Float4(x * v, y * v, z * v, w * v)
 
-    operator fun div(v: Float): Float4 {
-        return Float4(x / v, y / v, z / v, w / v)
-    }
+    operator fun div(v: Float): Float4 = Float4(x / v, y / v, z / v, w / v)
 
-    operator fun plus(v: Float4): Float4 {
-        return Float4(x + v.x, y + v.y, z + v.z, w + v.w)
-    }
+    operator fun plus(v: Float4): Float4 = Float4(x + v.x, y + v.y, z + v.z, w + v.w)
 
-    operator fun minus(v: Float4): Float4 {
-        return Float4(x - v.x, y - v.y, z - v.z, w - v.w)
-    }
+    operator fun minus(v: Float4): Float4 = Float4(x - v.x, y - v.y, z - v.z, w - v.w)
 
-    operator fun times(v: Float4): Float4 {
-        return Float4(x * v.x, y * v.y, z * v.z, w * v.w)
-    }
+    operator fun times(v: Float4): Float4 = Float4(x * v.x, y * v.y, z * v.z, w * v.w)
 
-    operator fun div(v: Float4): Float4 {
-        return Float4(x / v.x, y / v.y, z / v.z, w / v.w)
-    }
+    operator fun div(v: Float4): Float4 = Float4(x / v.x, y / v.y, z / v.z, w / v.w)
 
-    operator fun unaryMinus(): Float4 {
-        return Float4(-x, -y, -z, -w)
-    }
+    operator fun unaryMinus(): Float4 = Float4(-x, -y, -z, -w)
 
-    operator fun times(m: Mat4) = Float4(
-        x * m.v1.x + y * m.v2.x + z * m.v3.x + w * m.v4.x,
-        x * m.v1.y + y * m.v2.y + z * m.v3.y + w * m.v4.y,
-        x * m.v1.z + y * m.v2.z + z * m.v3.z + w * m.v4.z,
-        x * m.v1.w + y * m.v2.w + z * m.v3.w + w * m.v4.w
-    )
+    operator fun times(m: Mat4) =
+        Float4(
+            x * m.v1.x + y * m.v2.x + z * m.v3.x + w * m.v4.x,
+            x * m.v1.y + y * m.v2.y + z * m.v3.y + w * m.v4.y,
+            x * m.v1.z + y * m.v2.z + z * m.v3.z + w * m.v4.z,
+            x * m.v1.w + y * m.v2.w + z * m.v3.w + w * m.v4.w,
+        )
 
-    constructor(v: Float)                    : this(v, v, v, v)
-    constructor(xyz: Float3, w: Float)       : this(xyz.x, xyz.y, xyz.z, w)
-    constructor(x: Float, yzw: Float3)       : this(x, yzw.x, yzw.y, yzw.z)
-    constructor(xy: Float2, zw: Float2)      : this(xy.x, xy.y, zw.x, zw.y)
+    constructor(v: Float) : this(v, v, v, v)
+    constructor(xyz: Float3, w: Float) : this(xyz.x, xyz.y, xyz.z, w)
+    constructor(x: Float, yzw: Float3) : this(x, yzw.x, yzw.y, yzw.z)
+    constructor(xy: Float2, zw: Float2) : this(xy.x, xy.y, zw.x, zw.y)
     constructor(xy: Float2, z: Float, w: Float) : this(xy.x, xy.y, z, w)
     constructor(x: Float, y: Float, zw: Float2) : this(x, y, zw.x, zw.y)
     constructor(x: Float, yz: Float2, w: Float) : this(x, yz.x, yz.y, w)
 
     // Swizzle — Float2
-    val xx get() = Float2(x, x);  val xy get() = Float2(x, y);  val xz get() = Float2(x, z);  val xw get() = Float2(x, w)
-    val yx get() = Float2(y, x);  val yy get() = Float2(y, y);  val yz get() = Float2(y, z);  val yw get() = Float2(y, w)
-    val zx get() = Float2(z, x);  val zy get() = Float2(z, y);  val zz get() = Float2(z, z);  val zw get() = Float2(z, w)
-    val wx get() = Float2(w, x);  val wy get() = Float2(w, y);  val wz get() = Float2(w, z);  val ww get() = Float2(w, w)
+    val xx get() = Float2(x, x)
+    val xy get() = Float2(x, y)
+    val xz get() = Float2(x, z)
+    val xw get() = Float2(x, w)
+    val yx get() = Float2(y, x)
+    val yy get() = Float2(y, y)
+    val yz get() = Float2(y, z)
+    val yw get() = Float2(y, w)
+    val zx get() = Float2(z, x)
+    val zy get() = Float2(z, y)
+    val zz get() = Float2(z, z)
+    val zw get() = Float2(z, w)
+    val wx get() = Float2(w, x)
+    val wy get() = Float2(w, y)
+    val wz get() = Float2(w, z)
+    val ww get() = Float2(w, w)
 
     // Swizzle — Float3 (most common)
     val xyz get() = Float3(x, y, z)
@@ -156,17 +165,19 @@ data class Float4(
     val wwww get() = Float4(w, w, w, w)
 
     // RGBA aliases
-    val r get() = x;  val g get() = y;  val b get() = z;  val a = w
-    val rg   get() = Float2(x, y)
-    val rb   get() = Float2(x, z)
-    val ra   get() = Float2(x, w)
-    val gb   get() = Float2(y, z)
-    val ga   get() = Float2(y, w)
-    val ba   get() = Float2(z, w)
-    val rgb  get() = Float3(x, y, z)
-    val rga  get() = Float3(x, y, w)
-    val rba  get() = Float3(x, z, w)
-    val gba  get() = Float3(y, z, w)
+    val r get() = x
+    val g get() = y
+    val b get() = z
+    val a = w
+    val rg get() = Float2(x, y)
+    val rb get() = Float2(x, z)
+    val ra get() = Float2(x, w)
+    val gb get() = Float2(y, z)
+    val ga get() = Float2(y, w)
+    val ba get() = Float2(z, w)
+    val rgb get() = Float3(x, y, z)
+    val rga get() = Float3(x, y, w)
+    val rba get() = Float3(x, z, w)
+    val gba get() = Float3(y, z, w)
     val rgba get() = Float4(x, y, z, w)
-
 }

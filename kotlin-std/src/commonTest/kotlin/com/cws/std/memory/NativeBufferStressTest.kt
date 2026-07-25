@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.memory
 
 import kotlin.random.Random
@@ -6,11 +21,9 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class NativeBufferStressTest {
-
     @Test
     fun random_primitive_round_trip() {
         repeat(100) {
-
             forEachConfiguration { _, _, buffer ->
 
                 val random = Random(it)
@@ -82,7 +95,7 @@ class NativeBufferStressTest {
                     dest = clone,
                     srcIndex = 0,
                     destIndex = 0,
-                    sizeBytes = buffer.position
+                    sizeBytes = buffer.position,
                 )
 
                 clone.flip()
@@ -126,7 +139,6 @@ class NativeBufferStressTest {
         forEachConfiguration { _, _, buffer ->
 
             repeat(500) {
-
                 buffer.clear()
 
                 buffer.pushInt(1)

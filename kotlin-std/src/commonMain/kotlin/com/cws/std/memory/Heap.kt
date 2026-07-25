@@ -1,15 +1,34 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.memory
 
 import com.cws.std.platform.PlatformInfo
 import kotlin.math.min
 
-class FreeBlocks(size: Int) {
-
+class FreeBlocks(
+    size: Int,
+) {
     private val handles = MemoryHandleArray(size)
     private val sizes = IntArray(size)
     private var position = -1
 
-    fun push(handle: MemoryHandle, size: Int) {
+    fun push(
+        handle: MemoryHandle,
+        size: Int,
+    ) {
         position++
         handles[position] = handle
         sizes[position] = size
@@ -31,11 +50,9 @@ class FreeBlocks(size: Int) {
         }
         return NULL
     }
-
 }
 
 object Heap {
-
     private val buffer = NativeBuffer(PlatformInfo.getMemorySize(10f))
 
     val totalSize get() = buffer.limit
@@ -72,13 +89,19 @@ object Heap {
         return handle
     }
 
-    fun free(handle: MemoryHandle, size: Int) {
+    fun free(
+        handle: MemoryHandle,
+        size: Int,
+    ) {
         if (handle == NULL) return
         freeBlocks.push(handle, size)
         usedSize -= size
     }
 
-    fun reset(handle: MemoryHandle, size: Int) {
+    fun reset(
+        handle: MemoryHandle,
+        size: Int,
+    ) {
         buffer.setTo(0, handle, size)
     }
 
@@ -86,5 +109,4 @@ object Heap {
         val capacity = (PlatformInfo.memoryInfo.totalPhysicalSize * 0.10f).toLong()
         return min(capacity, Int.MAX_VALUE.toLong())
     }
-
 }

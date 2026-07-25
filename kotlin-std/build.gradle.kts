@@ -1,3 +1,21 @@
+/*
+ *
+ *  * Copyright 2026 CheerWizard
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     https://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ *
+ */
+
 @file:OptIn(ExperimentalWasmDsl::class)
 
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -9,12 +27,47 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.nmcp)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.spotless)
     `maven-publish`
     signing
 }
 
 group = "io.github.cheerwizard"
 version = "1.0.3"
+
+spotless {
+    kotlin {
+        target("**/*.kt")
+        licenseHeaderFile(
+            rootProject.layout.projectDirectory.file("config/license.txt").asFile,
+            "^(@file:|package )"
+        )
+    }
+    format("cpp") {
+        target(
+            "**/*.c",
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp"
+        )
+
+        targetExclude(
+            "**/.cxx/**",
+            "**/build/**",
+            "**/cmake-build*/**",
+            "**/out/**"
+        )
+
+        licenseHeaderFile(
+            rootProject.layout.projectDirectory.file("config/license-cpp.txt").asFile,
+            "^(#pragma once|#include|namespace)"
+        )
+    }
+}
+
+tasks.named("check") {
+    dependsOn("spotlessCheck")
+}
 
 kotlin {
     android {
@@ -154,8 +207,8 @@ publishing {
 
             licenses {
                 license {
-                    name.set("MIT License")
-                    url.set("https://opensource.org/licenses/MIT")
+                    name.set("Apache License, Version 2.0")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                 }
             }
 
@@ -406,15 +459,13 @@ dependencies {
 
 afterEvaluate {
     listOf(
-        "compileKotlinIosArm64",
-        "compileKotlinIosSimulatorArm64",
-        "compileKotlinIosX64",
         "compileKotlinDesktop",
         "desktopSourcesJar",
         "compileAndroidMain",
         "androidSourcesJar",
         "compileKotlinJs",
         "jsSourcesJar",
+        "compileKotlinWasmJs",
         "sourcesJar",
         "compileKotlinLinuxX64",
         "linuxX64SourcesJar",
@@ -422,6 +473,9 @@ afterEvaluate {
         "macosArm64SourcesJar",
         "compileKotlinMingwX64",
         "mingwX64SourcesJar",
+        "compileKotlinIosArm64",
+        "compileKotlinIosSimulatorArm64",
+        "compileKotlinIosX64",
         "kspKotlinIosArm64",
         "kspKotlinIosSimulatorArm64",
         "kspKotlinIosX64",

@@ -1,10 +1,24 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.memory
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class NativeBufferMemoryLayoutTest {
-
     @Test
     fun `byte size matches layout`() {
         assertEquals(1, Byte.sizeBytes(MemoryLayout.KOTLIN))
@@ -152,7 +166,7 @@ class NativeBufferMemoryLayoutTest {
             Float.sizeBytes(MemoryLayout.STD140) to Float.sizeBytes(MemoryLayout.STD430),
             Long.sizeBytes(MemoryLayout.STD140) to Long.sizeBytes(MemoryLayout.STD430),
             ULong.sizeBytes(MemoryLayout.STD140) to ULong.sizeBytes(MemoryLayout.STD430),
-            Double.sizeBytes(MemoryLayout.STD140) to Double.sizeBytes(MemoryLayout.STD430)
+            Double.sizeBytes(MemoryLayout.STD140) to Double.sizeBytes(MemoryLayout.STD430),
         )) {
             assertEquals(type.first, type.second)
         }

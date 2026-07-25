@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.math.vectors
 
 import com.cws.std.math.matrices.Mat3
@@ -8,23 +23,22 @@ data class Float3(
     var y: Float = 0f,
     var z: Float = 0f,
 ) {
-
-    operator fun get(i: Int): Float {
-        return when (i) {
+    operator fun get(i: Int): Float =
+        when (i) {
             0 -> x
             1 -> y
             2 -> z
             else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
         }
-    }
 
-    operator fun set(i: Int, v: Float) {
-        return when (i) {
-            0 -> x = v
-            1 -> y = v
-            2 -> z = v
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
-        }
+    operator fun set(
+        i: Int,
+        v: Float,
+    ) = when (i) {
+        0 -> x = v
+        1 -> y = v
+        2 -> z = v
+        else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
     }
 
     val length: Float get() {
@@ -34,51 +48,34 @@ data class Float3(
         return sqrt(x * x + y * y + z * z)
     }
 
-    operator fun plus(v: Float): Float3 {
-        return Float3(x + v, y + v, z + v)
-    }
+    operator fun plus(v: Float): Float3 = Float3(x + v, y + v, z + v)
 
-    operator fun minus(v: Float): Float3 {
-        return Float3(x - v, y - v, z - v)
-    }
+    operator fun minus(v: Float): Float3 = Float3(x - v, y - v, z - v)
 
-    operator fun times(v: Float): Float3 {
-        return Float3(x * v, y * v, z * v)
-    }
+    operator fun times(v: Float): Float3 = Float3(x * v, y * v, z * v)
 
-    operator fun div(v: Float): Float3 {
-        return Float3(x / v, y / v, z / v)
-    }
+    operator fun div(v: Float): Float3 = Float3(x / v, y / v, z / v)
 
-    operator fun plus(v: Float3): Float3 {
-        return Float3(x + v.x, y + v.y, z + v.z)
-    }
+    operator fun plus(v: Float3): Float3 = Float3(x + v.x, y + v.y, z + v.z)
 
-    operator fun minus(v: Float3): Float3 {
-        return Float3(x - v.x, y - v.y, z - v.z)
-    }
+    operator fun minus(v: Float3): Float3 = Float3(x - v.x, y - v.y, z - v.z)
 
-    operator fun times(v: Float3): Float3 {
-        return Float3(x * v.x, y * v.y, z * v.z)
-    }
+    operator fun times(v: Float3): Float3 = Float3(x * v.x, y * v.y, z * v.z)
 
-    operator fun div(v: Float3): Float3 {
-        return Float3(x / v.x, y / v.y, z / v.z)
-    }
+    operator fun div(v: Float3): Float3 = Float3(x / v.x, y / v.y, z / v.z)
 
-    operator fun unaryMinus(): Float3 {
-        return Float3(-x, -y, -z)
-    }
+    operator fun unaryMinus(): Float3 = Float3(-x, -y, -z)
 
-    operator fun times(m: Mat3) = Float3(
-        x * m.v1.x + y * m.v2.x + z * m.v3.x,
-        x * m.v1.y + y * m.v2.y + z * m.v3.y,
-        x * m.v1.z + y * m.v2.z + z * m.v3.z
-    )
+    operator fun times(m: Mat3) =
+        Float3(
+            x * m.v1.x + y * m.v2.x + z * m.v3.x,
+            x * m.v1.y + y * m.v2.y + z * m.v3.y,
+            x * m.v1.z + y * m.v2.z + z * m.v3.z,
+        )
 
-    constructor(v: Float)              : this(v, v, v)
-    constructor(xy: Float2, z: Float)  : this(xy.x, xy.y, z)
-    constructor(x: Float, yz: Float2)  : this(x, yz.x, yz.y)
+    constructor(v: Float) : this(v, v, v)
+    constructor(xy: Float2, z: Float) : this(xy.x, xy.y, z)
+    constructor(x: Float, yz: Float2) : this(x, yz.x, yz.y)
 
     // Swizzle — Float2
     val xx get() = Float2(x, x)
@@ -129,10 +126,11 @@ data class Float3(
     val zzzz get() = Float4(z, z, z, z)
 
     // RGB aliases
-    val r get() = x;  val g get() = y;  val b get() = z
-    val rg  get() = Float2(x, y)
-    val rb  get() = Float2(x, z)
-    val gb  get() = Float2(y, z)
+    val r get() = x
+    val g get() = y
+    val b get() = z
+    val rg get() = Float2(x, y)
+    val rb get() = Float2(x, z)
+    val gb get() = Float2(y, z)
     val rgb get() = Float3(x, y, z)
-
 }

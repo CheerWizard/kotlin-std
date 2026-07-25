@@ -1,7 +1,23 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.async
 
-open class RingBuffer<T>(private val capacity: Int) {
-
+open class RingBuffer<T>(
+    private val capacity: Int,
+) {
     private val buffer = arrayOfNulls<Any?>(capacity)
     private var head = 0
     private var tail = 0
@@ -22,6 +38,7 @@ open class RingBuffer<T>(private val capacity: Int) {
         return true
     }
 
+    @Suppress("UNCHECKED_CAST")
     open fun pop(): T? {
         if (tail == head) return null
         val value = buffer[tail] as? T?
@@ -49,5 +66,4 @@ open class RingBuffer<T>(private val capacity: Int) {
             buffer[head] = null
         }
     }
-
 }

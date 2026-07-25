@@ -1,5 +1,18 @@
-@file:OptIn(UnsafeNumber::class)
-
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.io
 
 import kotlinx.cinterop.CPointer
@@ -23,18 +36,18 @@ import platform.posix.fwrite
 import platform.posix.remove
 import platform.posix.strerror
 
-private fun FileMode.toNativeFileMode(): String = when (this) {
-    FileMode.OPEN_EXISTING -> "r+"
-    FileMode.CLEAR_WHEN_OPEN -> "w+"
-    FileMode.CREATE_IF_NOT_EXIST -> "a+"
-}
+private fun FileMode.toNativeFileMode(): String =
+    when (this) {
+        FileMode.OPEN_EXISTING -> "r+"
+        FileMode.CLEAR_WHEN_OPEN -> "w+"
+        FileMode.CREATE_IF_NOT_EXIST -> "a+"
+    }
 
 @OptIn(ExperimentalForeignApi::class)
 actual class File actual constructor(
     private val filepath: String,
     private val mode: FileMode,
 ) : AutoCloseable {
-
     actual val size: Int get() {
         val f = file ?: return 0
         val current = ftell(f)
@@ -71,21 +84,29 @@ actual class File actual constructor(
         }
     }
 
-    actual fun write(bytes: ByteArray, offset: Int, size: Int): Int {
+    actual fun write(
+        bytes: ByteArray,
+        offset: Int,
+        size: Int,
+    ): Int {
         file?.let { file ->
             bytes.usePinned { pinned ->
                 return fwrite(
                     pinned.addressOf(offset),
                     1u,
                     size.toULong(),
-                    file
+                    file,
                 ).toInt()
             }
         }
         return 0
     }
 
-    actual fun read(bytes: ByteArray, offset: Int, size: Int): Int {
+    actual fun read(
+        bytes: ByteArray,
+        offset: Int,
+        size: Int,
+    ): Int {
         file?.let { file ->
             bytes.usePinned { pinned ->
                 return fread(
@@ -112,5 +133,4 @@ actual class File actual constructor(
         }
         file = null
     }
-
 }

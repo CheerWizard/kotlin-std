@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.math.vectors
 
 import com.cws.std.math.operators.sqrt
@@ -9,23 +24,22 @@ data class Int3(
     var y: Int = 0,
     var z: Int = 0,
 ) {
-
-    operator fun get(i: Int): Int {
-        return when (i) {
+    operator fun get(i: Int): Int =
+        when (i) {
             0 -> x
             1 -> y
             2 -> z
             else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
         }
-    }
 
-    operator fun set(i: Int, v: Int) {
-        return when (i) {
-            0 -> x = v
-            1 -> y = v
-            2 -> z = v
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
-        }
+    operator fun set(
+        i: Int,
+        v: Int,
+    ) = when (i) {
+        0 -> x = v
+        1 -> y = v
+        2 -> z = v
+        else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
     }
 
     val length: Int get() {
@@ -35,50 +49,37 @@ data class Int3(
         return sqrt(x * x + y * y + z * z)
     }
 
-    operator fun plus(v: Int): Int3 {
-        return Int3(x + v, y + v, z + v)
-    }
+    operator fun plus(v: Int): Int3 = Int3(x + v, y + v, z + v)
 
-    operator fun minus(v: Int): Int3 {
-        return Int3(x - v, y - v, z - v)
-    }
+    operator fun minus(v: Int): Int3 = Int3(x - v, y - v, z - v)
 
-    operator fun times(v: Int): Int3 {
-        return Int3(x * v, y * v, z * v)
-    }
+    operator fun times(v: Int): Int3 = Int3(x * v, y * v, z * v)
 
-    operator fun div(v: Int): Int3 {
-        return Int3(x / v, y / v, z / v)
-    }
+    operator fun div(v: Int): Int3 = Int3(x / v, y / v, z / v)
 
-    operator fun plus(v: Int3): Int3 {
-        return Int3(x + v.x, y + v.y, z + v.z)
-    }
+    operator fun plus(v: Int3): Int3 = Int3(x + v.x, y + v.y, z + v.z)
 
-    operator fun minus(v: Int3): Int3 {
-        return Int3(x - v.x, y - v.y, z - v.z)
-    }
+    operator fun minus(v: Int3): Int3 = Int3(x - v.x, y - v.y, z - v.z)
 
-    operator fun times(v: Int3): Int3 {
-        return Int3(x * v.x, y * v.y, z * v.z)
-    }
+    operator fun times(v: Int3): Int3 = Int3(x * v.x, y * v.y, z * v.z)
 
-    operator fun div(v: Int3): Int3 {
-        return Int3(x / v.x, y / v.y, z / v.z)
-    }
+    operator fun div(v: Int3): Int3 = Int3(x / v.x, y / v.y, z / v.z)
 
-    operator fun unaryMinus(): Int3 {
-        return Int3(-x, -y, -z)
-    }
+    operator fun unaryMinus(): Int3 = Int3(-x, -y, -z)
 
-    constructor(v: Int)             : this(v, v, v)
-    constructor(xy: Int2, z: Int)   : this(xy.x, xy.y, z)
-    constructor(x: Int, yz: Int2)   : this(x, yz.x, yz.y)
+    constructor(v: Int) : this(v, v, v)
+    constructor(xy: Int2, z: Int) : this(xy.x, xy.y, z)
+    constructor(x: Int, yz: Int2) : this(x, yz.x, yz.y)
 
-    val xx get() = Int2(x, x);  val xy get() = Int2(x, y);  val xz get() = Int2(x, z)
-    val yx get() = Int2(y, x);  val yy get() = Int2(y, y);  val yz get() = Int2(y, z)
-    val zx get() = Int2(z, x);  val zy get() = Int2(z, y);  val zz get() = Int2(z, z)
+    val xx get() = Int2(x, x)
+    val xy get() = Int2(x, y)
+    val xz get() = Int2(x, z)
+    val yx get() = Int2(y, x)
+    val yy get() = Int2(y, y)
+    val yz get() = Int2(y, z)
+    val zx get() = Int2(z, x)
+    val zy get() = Int2(z, y)
+    val zz get() = Int2(z, z)
     val xyz get() = Int3(x, y, z)
     val xyzw get() = Int4(x, y, z, 0)
-
 }

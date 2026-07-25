@@ -1,5 +1,19 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 @file:OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
-
 package com.cws.std.platform
 
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -32,12 +46,13 @@ actual fun PlatformInfo.fetchMemoryInfo(): MemoryInfo {
         val count = alloc<mach_msg_type_number_tVar>()
         count.value = (sizeOf<task_vm_info_data_t>() / sizeOf<integer_tVar>()).toUInt()
 
-        val result = task_info(
-            mach_task_self_,
-            TASK_VM_INFO.toUInt(),
-            info.ptr.reinterpret(),
-            count.ptr
-        )
+        val result =
+            task_info(
+                mach_task_self_,
+                TASK_VM_INFO.toUInt(),
+                info.ptr.reinterpret(),
+                count.ptr,
+            )
 
         val usedPhysicalSize = if (result == KERN_SUCCESS) info.phys_footprint.toLong() else 0
 
@@ -46,20 +61,19 @@ actual fun PlatformInfo.fetchMemoryInfo(): MemoryInfo {
             freePhysicalSize = totalPhysicalSize - usedPhysicalSize,
             // on iOS there is no VM heap memory
             totalHeapSize = totalPhysicalSize,
-            freeHeapSize = totalPhysicalSize - usedPhysicalSize
+            freeHeapSize = totalPhysicalSize - usedPhysicalSize,
         )
     }
 }
 
 actual fun PlatformInfo.fetchCurrentProcessId(): Int = getpid()
 
-actual fun PlatformInfo.fetchCurrentThreadId(): Int {
-    return memScoped {
+actual fun PlatformInfo.fetchCurrentThreadId(): Int =
+    memScoped {
         val tid = alloc<ULongVar>()
         pthread_threadid_np(pthread_self(), tid.ptr)
         tid.value.toInt()
     }
-}
 
 actual fun PlatformInfo.fetchCurrentThreadName(): String {
     val buffer = ByteArray(256)

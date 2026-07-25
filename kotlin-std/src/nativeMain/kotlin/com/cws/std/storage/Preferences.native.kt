@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.storage
 
 import com.cws.print.Print
@@ -8,83 +23,117 @@ import kotlinx.serialization.json.Json
 
 internal expect fun getPreferencesFilepath(name: String): String
 
-actual class Preferences(private val name: String) {
-
+actual class Preferences(
+    private val name: String,
+) {
     companion object {
         private const val TAG = "Preferences"
     }
 
     private val file = File(getPreferencesFilepath(name))
-    private var data: MutableMap<String, String> = try {
-        Json.decodeFromString(file.readText())
-    } catch (e: Exception) {
-        Print.e(TAG, "Failed to load json data from $name.json", e)
-        mutableMapOf()
-    }
+    private var data: MutableMap<String, String> =
+        try {
+            Json.decodeFromString(file.readText())
+        } catch (e: Exception) {
+            Print.e(TAG, "Failed to load json data from $name.json", e)
+            mutableMapOf()
+        }
 
-    actual fun setByte(key: String, value: Byte) {
+    actual fun setByte(
+        key: String,
+        value: Byte,
+    ) {
         data[key] = value.toString()
     }
 
-    actual fun setBoolean(key: String, value: Boolean) {
+    actual fun setBoolean(
+        key: String,
+        value: Boolean,
+    ) {
         data[key] = value.toString()
     }
 
-    actual fun setShort(key: String, value: Short) {
+    actual fun setShort(
+        key: String,
+        value: Short,
+    ) {
         data[key] = value.toString()
     }
 
-    actual fun setInt(key: String, value: Int) {
+    actual fun setInt(
+        key: String,
+        value: Int,
+    ) {
         data[key] = value.toString()
     }
 
-    actual fun setLong(key: String, value: Long) {
+    actual fun setLong(
+        key: String,
+        value: Long,
+    ) {
         data[key] = value.toString()
     }
 
-    actual fun setFloat(key: String, value: Float) {
+    actual fun setFloat(
+        key: String,
+        value: Float,
+    ) {
         data[key] = value.toString()
     }
 
-    actual fun setDouble(key: String, value: Double) {
+    actual fun setDouble(
+        key: String,
+        value: Double,
+    ) {
         data[key] = value.toString()
     }
 
-    actual fun setString(key: String, value: String) {
+    actual fun setString(
+        key: String,
+        value: String,
+    ) {
         data[key] = value
     }
 
-    actual fun getByte(key: String, default: Byte): Byte {
-        return data[key]?.toByteOrNull() ?: default
-    }
+    actual fun getByte(
+        key: String,
+        default: Byte,
+    ): Byte = data[key]?.toByteOrNull() ?: default
 
-    actual fun getBoolean(key: String, default: Boolean): Boolean {
-        return data[key]?.toBooleanStrictOrNull() ?: default
-    }
+    actual fun getBoolean(
+        key: String,
+        default: Boolean,
+    ): Boolean = data[key]?.toBooleanStrictOrNull() ?: default
 
-    actual fun getShort(key: String, default: Short): Short {
-        return data[key]?.toShortOrNull() ?: default
-    }
+    actual fun getShort(
+        key: String,
+        default: Short,
+    ): Short = data[key]?.toShortOrNull() ?: default
 
-    actual fun getInt(key: String, default: Int): Int {
-        return data[key]?.toIntOrNull() ?: default
-    }
+    actual fun getInt(
+        key: String,
+        default: Int,
+    ): Int = data[key]?.toIntOrNull() ?: default
 
-    actual fun getLong(key: String, default: Long): Long {
-        return data[key]?.toLongOrNull() ?: default
-    }
+    actual fun getLong(
+        key: String,
+        default: Long,
+    ): Long = data[key]?.toLongOrNull() ?: default
 
-    actual fun getFloat(key: String, default: Float): Float {
-        return data[key]?.toFloatOrNull() ?: default
-    }
+    actual fun getFloat(
+        key: String,
+        default: Float,
+    ): Float = data[key]?.toFloatOrNull() ?: default
 
-    actual fun getDouble(key: String, default: Double): Double {
-        return data[key]?.toDoubleOrNull() ?: default
-    }
+    actual fun getDouble(
+        key: String,
+        default: Double,
+    ): Double = data[key]?.toDoubleOrNull() ?: default
 
-    actual fun getString(key: String, default: String): String {
-        return data[key] ?: default
-    }
+    actual fun getString(
+        key: String,
+        default: String,
+    ): String = data[key] ?: default
 
     actual fun remove(key: String) {
         data.remove(key)
@@ -106,5 +155,4 @@ actual class Preferences(private val name: String) {
             Print.e(TAG, "Failed to sync json data from $name.json", e)
         }
     }
-
 }

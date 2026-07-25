@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.math.matrices
 
 import com.cws.std.math.operators.inverse
@@ -9,7 +24,6 @@ data class Mat3(
     var v2: Float3 = Float3(),
     var v3: Float3 = Float3(),
 ) {
-
     constructor(
         m00: Float,
         m01: Float,
@@ -19,7 +33,7 @@ data class Mat3(
         m12: Float,
         m20: Float,
         m21: Float,
-        m22: Float
+        m22: Float,
     ) : this() {
         v1.x = m00
         v1.y = m01
@@ -34,14 +48,13 @@ data class Mat3(
         v3.z = m22
     }
 
-    operator fun get(i: Int): Float3 {
-        return when (i) {
+    operator fun get(i: Int): Float3 =
+        when (i) {
             0 -> v1
             1 -> v2
             2 -> v3
             else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
         }
-    }
 
     fun identity(): Mat3 {
         v1.x = 1f
@@ -63,29 +76,17 @@ data class Mat3(
 
     fun inverse(): Mat3 = inverse(this, this)
 
-    operator fun minus(v: Float): Mat3 {
-        return Mat3(v1 - v, v2 - v, v3 - v)
-    }
+    operator fun minus(v: Float): Mat3 = Mat3(v1 - v, v2 - v, v3 - v)
 
-    operator fun times(v: Float): Mat3 {
-        return Mat3(v1 * v, v2 * v, v3 * v)
-    }
+    operator fun times(v: Float): Mat3 = Mat3(v1 * v, v2 * v, v3 * v)
 
-    operator fun div(v: Float): Mat3 {
-        return Mat3(v1 / v, v2 / v, v3 / v)
-    }
+    operator fun div(v: Float): Mat3 = Mat3(v1 / v, v2 / v, v3 / v)
 
-    operator fun plus(m: Mat3): Mat3 {
-        return Mat3(v1 + m.v1, v2 + m.v2, v3 + m.v3)
-    }
+    operator fun plus(m: Mat3): Mat3 = Mat3(v1 + m.v1, v2 + m.v2, v3 + m.v3)
 
-    operator fun minus(m: Mat3): Mat3 {
-        return Mat3(v1 - m.v1, v2 - m.v2, v3 - m.v3)
-    }
+    operator fun minus(m: Mat3): Mat3 = Mat3(v1 - m.v1, v2 - m.v2, v3 - m.v3)
 
-    operator fun div(m: Mat3): Mat3 {
-        return Mat3(v1 / m.v1, v2 / m.v2, v3 / m.v3)
-    }
+    operator fun div(m: Mat3): Mat3 = Mat3(v1 / m.v1, v2 / m.v2, v3 / m.v3)
 
     operator fun times(m: Mat3): Mat3 {
         val m1 = this
@@ -112,10 +113,10 @@ data class Mat3(
         return m2
     }
 
-    operator fun times(v: Float3) = Float3(
-        v1.x * v.x + v1.y * v.y + v1.z * v.z,
-        v2.x * v.x + v2.y * v.y + v2.z * v.z,
-        v3.x * v.x + v3.y * v.y + v3.z * v.z
-    )
-
+    operator fun times(v: Float3) =
+        Float3(
+            v1.x * v.x + v1.y * v.y + v1.z * v.z,
+            v2.x * v.x + v2.y * v.y + v2.z * v.z,
+            v3.x * v.x + v3.y * v.y + v3.z * v.z,
+        )
 }

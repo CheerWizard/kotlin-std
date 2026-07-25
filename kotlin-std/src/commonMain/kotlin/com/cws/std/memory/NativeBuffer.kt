@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.memory
 
 enum class Endian {
@@ -9,17 +24,20 @@ enum class MemoryBoundary {
     // memory will live in scope of Kotlin VM heap,
     // useful for data < KOTLIN_HEAP_MAX_CAPACITY or data that could be safely copied
     KOTLIN_HEAP,
+
     // memory will live in scope of external boundary like C/C++ or Wasm.
     // useful for data > KOTLIN_HEAP_MAX_CAPACITY, big chunks of data or data that should not be interrupted by Kotlin GC,
     // or if data is passed to C/C++ libraries
-    EXTERNAL
+    EXTERNAL,
 }
 
 // the best limit is ~10 MB, to prevent GC pressure
 const val KOTLIN_HEAP_MAX_CAPACITY = 10 * 1024 * 1024
 
 internal fun NativeBuffer.isHeapBoundary() = isHeapBoundary(limit)
-internal fun NativeBuffer.isHeapBoundary(capacity: Int) = memoryBoundary == MemoryBoundary.KOTLIN_HEAP && capacity < KOTLIN_HEAP_MAX_CAPACITY
+
+internal fun NativeBuffer.isHeapBoundary(capacity: Int) =
+    memoryBoundary == MemoryBoundary.KOTLIN_HEAP && capacity < KOTLIN_HEAP_MAX_CAPACITY
 
 expect class NativeBuffer(
     capacity: Int,
@@ -27,7 +45,6 @@ expect class NativeBuffer(
     endian: Endian = Endian.LITTLE,
     memoryBoundary: MemoryBoundary = MemoryBoundary.KOTLIN_HEAP,
 ) {
-
     // wraps this buffer into EXTERNAL memory boundary
     constructor(
         address: Long,
@@ -59,13 +76,40 @@ expect class NativeBuffer(
 
     fun resize(newCapacity: Int)
 
-    fun setByteArray(index: Int, array: ByteArray)
-    fun setCharArray(index: Int, array: CharArray)
-    fun setShortArray(index: Int, array: ShortArray)
-    fun setIntArray(index: Int, array: IntArray)
-    fun setFloatArray(index: Int, array: FloatArray)
-    fun setLongArray(index: Int, array: LongArray)
-    fun setDoubleArray(index: Int, array: DoubleArray)
+    fun setByteArray(
+        index: Int,
+        array: ByteArray,
+    )
+
+    fun setCharArray(
+        index: Int,
+        array: CharArray,
+    )
+
+    fun setShortArray(
+        index: Int,
+        array: ShortArray,
+    )
+
+    fun setIntArray(
+        index: Int,
+        array: IntArray,
+    )
+
+    fun setFloatArray(
+        index: Int,
+        array: FloatArray,
+    )
+
+    fun setLongArray(
+        index: Int,
+        array: LongArray,
+    )
+
+    fun setDoubleArray(
+        index: Int,
+        array: DoubleArray,
+    )
 
     fun copyTo(
         dest: NativeBuffer,
@@ -116,10 +160,18 @@ expect class NativeBuffer(
         sizeBytes: Int,
     ): DoubleArray
 
-    fun setTo(value: Byte, destIndex: Int, sizeBytes: Int)
-    fun setByte(index: Int, value: Byte)
-    fun getByte(index: Int): Byte
+    fun setTo(
+        value: Byte,
+        destIndex: Int,
+        sizeBytes: Int,
+    )
 
+    fun setByte(
+        index: Int,
+        value: Byte,
+    )
+
+    fun getByte(index: Int): Byte
 }
 
 fun NativeBuffer.clear(): NativeBuffer {
@@ -135,54 +187,105 @@ fun NativeBuffer.flip(): NativeBuffer {
 
 fun NativeBuffer.clone(): NativeBuffer = NativeBuffer(limit, memoryLayout, endian, memoryBoundary)
 
-fun NativeBuffer.setBoolean(index: Int, value: Boolean) = setByte(index, if (value) 1 else 0)
+fun NativeBuffer.setBoolean(
+    index: Int,
+    value: Boolean,
+) = setByte(index, if (value) 1 else 0)
+
 fun NativeBuffer.getBoolean(index: Int): Boolean = getByte(index) == 1.toByte()
 
-fun NativeBuffer.setShort(index: Int, value: Short) = packShort(index, value)
+fun NativeBuffer.setShort(
+    index: Int,
+    value: Short,
+) = packShort(index, value)
+
 fun NativeBuffer.getShort(index: Int): Short = unpackShort(index)
 
-fun NativeBuffer.setUShort(index: Int, value: UShort) = packUShort(index, value)
+fun NativeBuffer.setUShort(
+    index: Int,
+    value: UShort,
+) = packUShort(index, value)
+
 fun NativeBuffer.getUShort(index: Int): UShort = unpackUShort(index)
 
-fun NativeBuffer.setChar(index: Int, value: Char) = packChar(index, value)
+fun NativeBuffer.setChar(
+    index: Int,
+    value: Char,
+) = packChar(index, value)
+
 fun NativeBuffer.getChar(index: Int): Char = unpackChar(index)
 
-fun NativeBuffer.setInt(index: Int, value: Int) = packInt(index, value)
+fun NativeBuffer.setInt(
+    index: Int,
+    value: Int,
+) = packInt(index, value)
+
 fun NativeBuffer.getInt(index: Int): Int = unpackInt(index)
 
-fun NativeBuffer.setUInt(index: Int, value: UInt) = packUInt(index, value)
+fun NativeBuffer.setUInt(
+    index: Int,
+    value: UInt,
+) = packUInt(index, value)
+
 fun NativeBuffer.getUInt(index: Int): UInt = unpackUInt(index)
 
-fun NativeBuffer.setFloat(index: Int, value: Float) = packFloat(index, value)
+fun NativeBuffer.setFloat(
+    index: Int,
+    value: Float,
+) = packFloat(index, value)
+
 fun NativeBuffer.getFloat(index: Int): Float = unpackFloat(index)
 
-fun NativeBuffer.setLong(index: Int, value: Long) = packLong(index, value)
+fun NativeBuffer.setLong(
+    index: Int,
+    value: Long,
+) = packLong(index, value)
+
 fun NativeBuffer.getLong(index: Int): Long = unpackLong(index)
 
-fun NativeBuffer.setULong(index: Int, value: ULong) = packULong(index, value)
+fun NativeBuffer.setULong(
+    index: Int,
+    value: ULong,
+) = packULong(index, value)
+
 fun NativeBuffer.getULong(index: Int): ULong = unpackULong(index)
 
-fun NativeBuffer.setDouble(index: Int, value: Double) = packDouble(index, value)
+fun NativeBuffer.setDouble(
+    index: Int,
+    value: Double,
+) = packDouble(index, value)
 
 fun NativeBuffer.getDouble(index: Int): Double = unpackDouble(index)
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.setUByteArray(index: Int, array: UByteArray) {
+fun NativeBuffer.setUByteArray(
+    index: Int,
+    array: UByteArray,
+) {
     setByteArray(index, array.asByteArray())
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.setUShortArray(index: Int, array: UShortArray) {
+fun NativeBuffer.setUShortArray(
+    index: Int,
+    array: UShortArray,
+) {
     setShortArray(index, array.asShortArray())
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.setUIntArray(index: Int, array: UIntArray) {
+fun NativeBuffer.setUIntArray(
+    index: Int,
+    array: UIntArray,
+) {
     setIntArray(index, array.asIntArray())
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.setULongArray(index: Int, array: ULongArray) {
+fun NativeBuffer.setULongArray(
+    index: Int,
+    array: ULongArray,
+) {
     setLongArray(index, array.asLongArray())
 }
 
@@ -265,9 +368,7 @@ fun NativeBuffer.nextByteArray(size: Int): ByteArray {
 fun NativeBuffer.nextUByteArray(): UByteArray = nextUByteArray(nextInt())
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.nextUByteArray(size: Int): UByteArray {
-    return nextByteArray(size).asUByteArray()
-}
+fun NativeBuffer.nextUByteArray(size: Int): UByteArray = nextByteArray(size).asUByteArray()
 
 fun NativeBuffer.nextShortArray(): ShortArray = nextShortArray(nextInt())
 
@@ -282,9 +383,7 @@ fun NativeBuffer.nextShortArray(size: Int): ShortArray {
 fun NativeBuffer.nextUShortArray(): UShortArray = nextUShortArray(nextInt())
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.nextUShortArray(size: Int): UShortArray {
-    return nextShortArray(size).asUShortArray()
-}
+fun NativeBuffer.nextUShortArray(size: Int): UShortArray = nextShortArray(size).asUShortArray()
 
 fun NativeBuffer.nextCharArray(): CharArray = nextCharArray(nextInt())
 
@@ -308,9 +407,7 @@ fun NativeBuffer.nextIntArray(size: Int): IntArray {
 fun NativeBuffer.nextUIntArray(): UIntArray = nextUIntArray(nextInt())
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.nextUIntArray(size: Int): UIntArray {
-    return nextIntArray(size).asUIntArray()
-}
+fun NativeBuffer.nextUIntArray(size: Int): UIntArray = nextIntArray(size).asUIntArray()
 
 fun NativeBuffer.nextLongArray(): LongArray = nextLongArray(nextInt())
 
@@ -325,9 +422,7 @@ fun NativeBuffer.nextLongArray(size: Int): LongArray {
 fun NativeBuffer.nextULongArray(): ULongArray = nextULongArray(nextInt())
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.nextULongArray(size: Int): ULongArray {
-    return nextLongArray(size).asULongArray()
-}
+fun NativeBuffer.nextULongArray(size: Int): ULongArray = nextLongArray(size).asULongArray()
 
 fun NativeBuffer.nextFloatArray(): FloatArray = nextFloatArray(nextInt())
 
@@ -347,21 +442,13 @@ fun NativeBuffer.nextDoubleArray(size: Int): DoubleArray {
     return value
 }
 
-fun NativeBuffer.nextStringUtf8(): String {
-    return nextByteArray().decodeToString()
-}
+fun NativeBuffer.nextStringUtf8(): String = nextByteArray().decodeToString()
 
-fun NativeBuffer.nextStringUtf8(size: Int): String {
-    return nextByteArray(size).decodeToString().trimEnd('\u0000')
-}
+fun NativeBuffer.nextStringUtf8(size: Int): String = nextByteArray(size).decodeToString().trimEnd('\u0000')
 
-fun NativeBuffer.nextStringUtf16(): String {
-    return nextCharArray().concatToString()
-}
+fun NativeBuffer.nextStringUtf16(): String = nextCharArray().concatToString()
 
-fun NativeBuffer.nextStringUtf16(size: Int): String {
-    return nextCharArray(size).concatToString().trimEnd('\u0000')
-}
+fun NativeBuffer.nextStringUtf16(size: Int): String = nextCharArray(size).concatToString().trimEnd('\u0000')
 
 inline fun <T> NativeBuffer.nextList(decode: () -> T): List<T> {
     val size = nextInt()
@@ -375,7 +462,10 @@ inline fun <T> NativeBuffer.nextSet(decode: () -> T): Set<T> {
     }
 }
 
-inline fun <K, V> NativeBuffer.nextMap(decodeKey: () -> K, decodeValue: () -> V): Map<K, V> {
+inline fun <K, V> NativeBuffer.nextMap(
+    decodeKey: () -> K,
+    decodeValue: () -> V,
+): Map<K, V> {
     val size = nextInt()
     return LinkedHashMap<K, V>(size).apply {
         repeat(size) { put(decodeKey(), decodeValue()) }
@@ -458,7 +548,10 @@ fun NativeBuffer.pushByteArray(value: ByteArray?) {
     }
 }
 
-fun NativeBuffer.pushFixedByteArray(value: ByteArray?, size: Int) {
+fun NativeBuffer.pushFixedByteArray(
+    value: ByteArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedByteArray value == null or value.size != fixedSize"
     }
@@ -478,7 +571,10 @@ fun NativeBuffer.pushUByteArray(value: UByteArray?) {
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.pushFixedUByteArray(value: UByteArray?, size: Int) {
+fun NativeBuffer.pushFixedUByteArray(
+    value: UByteArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedUByteArray value == null or value.size != fixedSize"
     }
@@ -496,7 +592,10 @@ fun NativeBuffer.pushShortArray(value: ShortArray?) {
     }
 }
 
-fun NativeBuffer.pushFixedShortArray(value: ShortArray?, size: Int) {
+fun NativeBuffer.pushFixedShortArray(
+    value: ShortArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedShortArray value == null or value.size != fixedSize"
     }
@@ -516,7 +615,10 @@ fun NativeBuffer.pushUShortArray(value: UShortArray?) {
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.pushFixedUShortArray(value: UShortArray?, size: Int) {
+fun NativeBuffer.pushFixedUShortArray(
+    value: UShortArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedUShortArray value == null or value.size != fixedSize"
     }
@@ -534,7 +636,10 @@ fun NativeBuffer.pushCharArray(value: CharArray?) {
     }
 }
 
-fun NativeBuffer.pushFixedCharArray(value: CharArray?, size: Int) {
+fun NativeBuffer.pushFixedCharArray(
+    value: CharArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedCharArray value == null or value.size != fixedSize"
     }
@@ -552,7 +657,10 @@ fun NativeBuffer.pushIntArray(value: IntArray?) {
     }
 }
 
-fun NativeBuffer.pushFixedIntArray(value: IntArray?, size: Int) {
+fun NativeBuffer.pushFixedIntArray(
+    value: IntArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedIntArray value == null or value.size != fixedSize"
     }
@@ -572,7 +680,10 @@ fun NativeBuffer.pushUIntArray(value: UIntArray?) {
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.pushFixedUIntArray(value: UIntArray?, size: Int) {
+fun NativeBuffer.pushFixedUIntArray(
+    value: UIntArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedUIntArray value == null or value.size != fixedSize"
     }
@@ -590,7 +701,10 @@ fun NativeBuffer.pushLongArray(value: LongArray?) {
     }
 }
 
-fun NativeBuffer.pushFixedLongArray(value: LongArray?, size: Int) {
+fun NativeBuffer.pushFixedLongArray(
+    value: LongArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedLongArray value == null or value.size != fixedSize"
     }
@@ -610,7 +724,10 @@ fun NativeBuffer.pushULongArray(value: ULongArray?) {
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-fun NativeBuffer.pushFixedULongArray(value: ULongArray?, size: Int) {
+fun NativeBuffer.pushFixedULongArray(
+    value: ULongArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedULongArray value == null or value.size != fixedSize"
     }
@@ -628,7 +745,10 @@ fun NativeBuffer.pushFloatArray(value: FloatArray?) {
     }
 }
 
-fun NativeBuffer.pushFixedFloatArray(value: FloatArray?, size: Int) {
+fun NativeBuffer.pushFixedFloatArray(
+    value: FloatArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedFloatArray value == null or value.size != fixedSize"
     }
@@ -646,7 +766,10 @@ fun NativeBuffer.pushDoubleArray(value: DoubleArray?) {
     }
 }
 
-fun NativeBuffer.pushFixedDoubleArray(value: DoubleArray?, size: Int) {
+fun NativeBuffer.pushFixedDoubleArray(
+    value: DoubleArray?,
+    size: Int,
+) {
     require(value != null && value.size == size) {
         "pushFixedDoubleArray value == null or value.size != fixedSize"
     }
@@ -658,11 +781,16 @@ fun NativeBuffer.pushStringUtf8(value: String?) {
     pushByteArray(value?.encodeToByteArray())
 }
 
-fun NativeBuffer.pushFixedStringUtf8(value: String?, size: Int) {
-    val bytes = value.orEmpty()
-        .take(size)
-        .padEnd(size, '\u0000')
-        .encodeToByteArray()
+fun NativeBuffer.pushFixedStringUtf8(
+    value: String?,
+    size: Int,
+) {
+    val bytes =
+        value
+            .orEmpty()
+            .take(size)
+            .padEnd(size, '\u0000')
+            .encodeToByteArray()
     pushFixedByteArray(bytes, size)
 }
 
@@ -670,20 +798,32 @@ fun NativeBuffer.pushStringUtf16(value: String?) {
     pushCharArray(value?.toCharArray())
 }
 
-fun NativeBuffer.pushFixedStringUtf16(value: String?, size: Int) {
-    val chars = value.orEmpty()
-        .take(size)
-        .padEnd(size, '\u0000')
-        .toCharArray()
+fun NativeBuffer.pushFixedStringUtf16(
+    value: String?,
+    size: Int,
+) {
+    val chars =
+        value
+            .orEmpty()
+            .take(size)
+            .padEnd(size, '\u0000')
+            .toCharArray()
     pushFixedCharArray(chars, size)
 }
 
-inline fun <T> NativeBuffer.pushCollection(items: Collection<T>, encode: (T) -> Unit) {
+inline fun <T> NativeBuffer.pushCollection(
+    items: Collection<T>,
+    encode: (T) -> Unit,
+) {
     pushInt(items.size)
     items.forEach { encode(it) }
 }
 
-inline fun <K, V> NativeBuffer.pushMap(map: Map<K, V>, encodeKey: (K) -> Unit, encodeValue: (V) -> Unit) {
+inline fun <K, V> NativeBuffer.pushMap(
+    map: Map<K, V>,
+    encodeKey: (K) -> Unit,
+    encodeValue: (V) -> Unit,
+) {
     pushInt(map.size)
     map.forEach { (k, v) ->
         encodeKey(k)
@@ -691,13 +831,17 @@ inline fun <K, V> NativeBuffer.pushMap(map: Map<K, V>, encodeKey: (K) -> Unit, e
     }
 }
 
-internal fun NativeBuffer.packShort(index: Int, value: Short) {
+internal fun NativeBuffer.packShort(
+    index: Int,
+    value: Short,
+) {
     assertLimit(index)
     when (endian) {
         Endian.LITTLE -> {
             setByte(index, value.toByte())
             setByte(index + 1, (value.toInt() shr 8).toByte())
         }
+
         Endian.BIG -> {
             setByte(index, (value.toInt() shr 8).toByte())
             setByte(index + 1, value.toByte())
@@ -715,18 +859,24 @@ internal fun NativeBuffer.unpackShort(index: Int): Short {
     }
 }
 
-
-internal fun NativeBuffer.packUShort(index: Int, value: UShort) = packShort(index, value.toShort())
+internal fun NativeBuffer.packUShort(
+    index: Int,
+    value: UShort,
+) = packShort(index, value.toShort())
 
 internal fun NativeBuffer.unpackUShort(index: Int) = unpackShort(index).toUShort()
 
-internal fun NativeBuffer.packChar(index: Int, value: Char) {
+internal fun NativeBuffer.packChar(
+    index: Int,
+    value: Char,
+) {
     assertLimit(index)
     when (endian) {
         Endian.LITTLE -> {
             setByte(index, value.code.toByte())
             setByte(index + 1, (value.code shr 8).toByte())
         }
+
         Endian.BIG -> {
             setByte(index, (value.code shr 8).toByte())
             setByte(index + 1, value.code.toByte())
@@ -744,13 +894,17 @@ internal fun NativeBuffer.unpackChar(index: Int): Char {
     }
 }
 
-internal fun NativeBuffer.packInt(index: Int, value: Int) {
+internal fun NativeBuffer.packInt(
+    index: Int,
+    value: Int,
+) {
     assertLimit(index)
     when (endian) {
         Endian.LITTLE -> {
             setShort(index, value.toShort())
             setShort(index + 2, (value shr 16).toShort())
         }
+
         Endian.BIG -> {
             setShort(index, (value shr 16).toShort())
             setShort(index + 2, value.toShort())
@@ -768,17 +922,24 @@ internal fun NativeBuffer.unpackInt(index: Int): Int {
     }
 }
 
-internal fun NativeBuffer.packUInt(index: Int, value: UInt) = packInt(index, value.toInt())
+internal fun NativeBuffer.packUInt(
+    index: Int,
+    value: UInt,
+) = packInt(index, value.toInt())
 
 internal fun NativeBuffer.unpackUInt(index: Int) = unpackInt(index).toUInt()
 
-internal fun NativeBuffer.packLong(index: Int, value: Long) {
+internal fun NativeBuffer.packLong(
+    index: Int,
+    value: Long,
+) {
     assertLimit(index)
     when (endian) {
         Endian.LITTLE -> {
             setInt(index, value.toInt())
             setInt(index + 4, (value shr 32).toInt())
         }
+
         Endian.BIG -> {
             setInt(index, (value shr 32).toInt())
             setInt(index + 4, value.toInt())
@@ -796,13 +957,16 @@ internal fun NativeBuffer.unpackLong(index: Int): Long {
     }
 }
 
-internal fun NativeBuffer.packULong(index: Int, value: ULong) = packLong(index, value.toLong())
+internal fun NativeBuffer.packULong(
+    index: Int,
+    value: ULong,
+) = packLong(index, value.toLong())
 
 internal fun NativeBuffer.unpackULong(index: Int) = unpackLong(index).toULong()
 
 internal fun NativeBuffer.packFloat(
     index: Int,
-    value: Float
+    value: Float,
 ) {
     assertLimit(index)
     val bits = value.toBits()
@@ -811,6 +975,7 @@ internal fun NativeBuffer.packFloat(
             setShort(index, bits.toShort())
             setShort(index + 2, (bits shr 16).toShort())
         }
+
         Endian.BIG -> {
             setShort(index, (bits shr 16).toShort())
             setShort(index + 2, bits.toShort())
@@ -822,14 +987,18 @@ internal fun NativeBuffer.unpackFloat(index: Int): Float {
     assertLimit(index)
     val low = getShort(index).toInt() and 0xFFFF
     val high = getShort(index + 2).toInt() and 0xFFFF
-    val bits = when (endian) {
-        Endian.LITTLE -> low or (high shl 16)
-        Endian.BIG -> (low shl 16) or high
-    }
+    val bits =
+        when (endian) {
+            Endian.LITTLE -> low or (high shl 16)
+            Endian.BIG -> (low shl 16) or high
+        }
     return Float.fromBits(bits)
 }
 
-internal fun NativeBuffer.packDouble(index: Int, value: Double) {
+internal fun NativeBuffer.packDouble(
+    index: Int,
+    value: Double,
+) {
     assertLimit(index)
     val bits = value.toBits()
     packLong(index, bits)
@@ -842,12 +1011,12 @@ internal fun NativeBuffer.unpackDouble(index: Int): Double {
 
 private fun NativeBuffer.assertPosition() {
     if (position > limit) {
-        throw IndexOutOfBoundsException("NativeBuffer: Position is out of bounds! position=$position limit=${limit}")
+        throw IndexOutOfBoundsException("NativeBuffer: Position is out of bounds! position=$position limit=$limit")
     }
 }
 
 internal fun NativeBuffer.assertLimit(i: Int) {
     if (i !in 0..<limit) {
-        throw IndexOutOfBoundsException("NativeBuffer: Index is out of bounds! i=$i limit=${limit}")
+        throw IndexOutOfBoundsException("NativeBuffer: Index is out of bounds! i=$i limit=$limit")
     }
 }

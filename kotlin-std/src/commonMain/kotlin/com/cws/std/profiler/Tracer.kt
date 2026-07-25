@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.profiler
 
 import com.cws.print.getCurrentTimeNanos
@@ -13,7 +28,6 @@ import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.ExperimentalTime
 
 object Tracer {
-
     var enabled: Boolean = false
 
     var active = false
@@ -61,11 +75,12 @@ object Tracer {
 
     fun launchFor(duration: Duration) {
         if (job?.isActive == true) return
-        job = scope.launch {
-            begin()
-            delay(duration)
-            end()
-        }
+        job =
+            scope.launch {
+                begin()
+                delay(duration)
+                end()
+            }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -75,7 +90,7 @@ object Tracer {
         color: TraceColor = TraceColor.HIGHLIGHT,
         category: String,
         functionName: String,
-        function: () -> Unit
+        function: () -> Unit,
     ) {
         trace(
             scope = scope,
@@ -84,7 +99,7 @@ object Tracer {
             category = category,
             functionName = functionName,
             expectedDuration = 0.nanoseconds,
-            function = function
+            function = function,
         )
     }
 
@@ -96,7 +111,7 @@ object Tracer {
         category: String,
         functionName: String,
         expectedDuration: Duration,
-        function: () -> Unit
+        function: () -> Unit,
     ) {
         trace(
             scope = scope,
@@ -105,7 +120,7 @@ object Tracer {
             category = category,
             functionName = functionName,
             expectedDuration = expectedDuration,
-            function = function
+            function = function,
         )
     }
 
@@ -149,5 +164,4 @@ object Tracer {
             )
         }
     }
-
 }

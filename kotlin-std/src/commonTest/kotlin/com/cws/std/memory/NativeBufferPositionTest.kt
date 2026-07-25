@@ -1,10 +1,24 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.memory
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class NativeBufferPositionTest {
-
     @Test
     fun `clear resets position`() {
         for (layout in MemoryLayout.entries) {
@@ -31,7 +45,7 @@ class NativeBufferPositionTest {
 
             val expected =
                 Int.sizeBytes(layout) +
-                        Long.sizeBytes(layout)
+                    Long.sizeBytes(layout)
 
             assertEquals(expected, buffer.position)
 
@@ -46,7 +60,6 @@ class NativeBufferPositionTest {
     @Test
     fun `push methods advance position correctly`() {
         for (layout in MemoryLayout.entries) {
-
             assertPush(layout, Byte.sizeBytes(layout)) {
                 pushByte(1)
             }
@@ -96,7 +109,6 @@ class NativeBufferPositionTest {
     @Test
     fun `next methods advance position correctly`() {
         for (layout in MemoryLayout.entries) {
-
             assertNext(layout, Byte.sizeBytes(layout), {
                 pushByte(1)
             }) {
@@ -168,11 +180,11 @@ class NativeBufferPositionTest {
     @Test
     fun `multiple pushes accumulate position`() {
         for (layout in MemoryLayout.entries) {
-
-            val buffer = NativeBuffer(
-                capacity = 256,
-                memoryLayout = layout
-            )
+            val buffer =
+                NativeBuffer(
+                    capacity = 256,
+                    memoryLayout = layout,
+                )
 
             buffer.pushByte(1)
             buffer.pushShort(2)
@@ -183,11 +195,11 @@ class NativeBufferPositionTest {
 
             val expected =
                 Byte.sizeBytes(layout) +
-                        Short.sizeBytes(layout) +
-                        Int.sizeBytes(layout) +
-                        Long.sizeBytes(layout) +
-                        Float.sizeBytes(layout) +
-                        Double.sizeBytes(layout)
+                    Short.sizeBytes(layout) +
+                    Int.sizeBytes(layout) +
+                    Long.sizeBytes(layout) +
+                    Float.sizeBytes(layout) +
+                    Double.sizeBytes(layout)
 
             assertEquals(expected, buffer.position)
 
@@ -198,11 +210,11 @@ class NativeBufferPositionTest {
     @Test
     fun `multiple nexts accumulate position`() {
         for (layout in MemoryLayout.entries) {
-
-            val buffer = NativeBuffer(
-                capacity = 256,
-                memoryLayout = layout
-            )
+            val buffer =
+                NativeBuffer(
+                    capacity = 256,
+                    memoryLayout = layout,
+                )
 
             buffer.pushByte(1)
             buffer.pushShort(2)
@@ -218,9 +230,9 @@ class NativeBufferPositionTest {
 
             val expected =
                 Byte.sizeBytes(layout) +
-                        Short.sizeBytes(layout) +
-                        Int.sizeBytes(layout) +
-                        Long.sizeBytes(layout)
+                    Short.sizeBytes(layout) +
+                    Int.sizeBytes(layout) +
+                    Long.sizeBytes(layout)
 
             assertEquals(expected, buffer.position)
 
@@ -231,11 +243,11 @@ class NativeBufferPositionTest {
     @Test
     fun `manual position assignment`() {
         for (layout in MemoryLayout.entries) {
-
-            val buffer = NativeBuffer(
-                capacity = 64,
-                memoryLayout = layout
-            )
+            val buffer =
+                NativeBuffer(
+                    capacity = 64,
+                    memoryLayout = layout,
+                )
 
             buffer.position = 17
 
@@ -248,11 +260,11 @@ class NativeBufferPositionTest {
     @Test
     fun `flip is idempotent`() {
         for (layout in MemoryLayout.entries) {
-
-            val buffer = NativeBuffer(
-                capacity = 64,
-                memoryLayout = layout
-            )
+            val buffer =
+                NativeBuffer(
+                    capacity = 64,
+                    memoryLayout = layout,
+                )
 
             buffer.pushInt(1)
 
@@ -268,12 +280,13 @@ class NativeBufferPositionTest {
     private inline fun assertPush(
         layout: MemoryLayout,
         expected: Int,
-        crossinline push: NativeBuffer.() -> Unit
+        crossinline push: NativeBuffer.() -> Unit,
     ) {
-        val buffer = NativeBuffer(
-            capacity = 64,
-            memoryLayout = layout
-        )
+        val buffer =
+            NativeBuffer(
+                capacity = 64,
+                memoryLayout = layout,
+            )
 
         buffer.push()
 
@@ -286,12 +299,13 @@ class NativeBufferPositionTest {
         layout: MemoryLayout,
         expected: Int,
         crossinline push: NativeBuffer.() -> Unit,
-        crossinline next: NativeBuffer.() -> T
+        crossinline next: NativeBuffer.() -> T,
     ) {
-        val buffer = NativeBuffer(
-            capacity = 64,
-            memoryLayout = layout
-        )
+        val buffer =
+            NativeBuffer(
+                capacity = 64,
+                memoryLayout = layout,
+            )
 
         buffer.push()
         buffer.flip()

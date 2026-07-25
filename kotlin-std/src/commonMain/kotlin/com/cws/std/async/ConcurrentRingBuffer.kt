@@ -1,22 +1,35 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.async
 
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.withLock
 
-class ConcurrentRingBuffer<T>(capacity: Int) : RingBuffer<T>(capacity) {
-
+class ConcurrentRingBuffer<T>(
+    capacity: Int,
+) : RingBuffer<T>(capacity) {
     private val lock = ReentrantLock()
 
-    override fun push(item: T): Boolean {
-        return lock.withLock {
+    override fun push(item: T): Boolean =
+        lock.withLock {
             super.push(item)
         }
-    }
 
-    override fun pop(): T? {
-        return lock.withLock {
+    override fun pop(): T? =
+        lock.withLock {
             super.pop()
         }
-    }
-
 }

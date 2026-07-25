@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.math.vectors
 
 import com.cws.std.math.operators.sqrt
@@ -7,23 +22,22 @@ data class UInt3(
     var y: UInt = 0u,
     var z: UInt = 0u,
 ) {
-
-    operator fun get(i: Int): UInt {
-        return when (i) {
+    operator fun get(i: Int): UInt =
+        when (i) {
             0 -> x
             1 -> y
             2 -> z
             else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
         }
-    }
 
-    operator fun set(i: Int, v: UInt) {
-        return when (i) {
-            0 -> x = v
-            1 -> y = v
-            2 -> z = v
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
-        }
+    operator fun set(
+        i: Int,
+        v: UInt,
+    ) = when (i) {
+        0 -> x = v
+        1 -> y = v
+        2 -> z = v
+        else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
     }
 
     val length: UInt get() {
@@ -33,44 +47,29 @@ data class UInt3(
         return sqrt(x * x + y * y + z * z)
     }
 
-    operator fun plus(v: UInt): UInt3 {
-        return UInt3(x + v, y + v, z + v)
-    }
+    operator fun plus(v: UInt): UInt3 = UInt3(x + v, y + v, z + v)
 
-    operator fun minus(v: UInt): UInt3 {
-        return UInt3(x - v, y - v, z - v)
-    }
+    operator fun minus(v: UInt): UInt3 = UInt3(x - v, y - v, z - v)
 
-    operator fun times(v: UInt): UInt3 {
-        return UInt3(x * v, y * v, z * v)
-    }
+    operator fun times(v: UInt): UInt3 = UInt3(x * v, y * v, z * v)
 
-    operator fun div(v: UInt): UInt3 {
-        return UInt3(x / v, y / v, z / v)
-    }
+    operator fun div(v: UInt): UInt3 = UInt3(x / v, y / v, z / v)
 
-    operator fun plus(v: UInt3): UInt3 {
-        return UInt3(x + v.x, y + v.y, z + v.z)
-    }
+    operator fun plus(v: UInt3): UInt3 = UInt3(x + v.x, y + v.y, z + v.z)
 
-    operator fun minus(v: UInt3): UInt3 {
-        return UInt3(x - v.x, y - v.y, z - v.z)
-    }
+    operator fun minus(v: UInt3): UInt3 = UInt3(x - v.x, y - v.y, z - v.z)
 
-    operator fun times(v: UInt3): UInt3 {
-        return UInt3(x * v.x, y * v.y, z * v.z)
-    }
+    operator fun times(v: UInt3): UInt3 = UInt3(x * v.x, y * v.y, z * v.z)
 
-    operator fun div(v: UInt3): UInt3 {
-        return UInt3(x / v.x, y / v.y, z / v.z)
-    }
+    operator fun div(v: UInt3): UInt3 = UInt3(x / v.x, y / v.y, z / v.z)
 
-    constructor(v: UInt)              : this(v, v, v)
-    constructor(xy: UInt2, z: UInt)   : this(xy.x, xy.y, z)
-    constructor(x: UInt, yz: UInt2)   : this(x, yz.x, yz.y)
-    constructor(xyz: Int3)            : this(xyz.x.toUInt(), xyz.y.toUInt(), xyz.z.toUInt())
+    constructor(v: UInt) : this(v, v, v)
+    constructor(xy: UInt2, z: UInt) : this(xy.x, xy.y, z)
+    constructor(x: UInt, yz: UInt2) : this(x, yz.x, yz.y)
+    constructor(xyz: Int3) : this(xyz.x.toUInt(), xyz.y.toUInt(), xyz.z.toUInt())
 
-    val xx get() = UInt2(x, x);  val xy get() = UInt2(x, y);  val xz get() = UInt2(x, z)
+    val xx get() = UInt2(x, x)
+    val xy get() = UInt2(x, y)
+    val xz get() = UInt2(x, z)
     val xyz get() = UInt3(x, y, z)
-
 }

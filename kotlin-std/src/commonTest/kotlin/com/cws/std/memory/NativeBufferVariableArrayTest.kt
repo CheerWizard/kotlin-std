@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.memory
 
 import kotlin.test.Test
@@ -5,7 +20,6 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class NativeBufferVariableArrayTest {
-
     @Test
     fun `byte array round trip`() {
         testByteArray(null)
@@ -63,14 +77,14 @@ class NativeBufferVariableArrayTest {
 
             assertEquals(
                 Int.sizeBytes(layout) + expected.sizeBytes(layout),
-                buffer.position
+                buffer.position,
             )
 
             buffer.flip()
 
             assertContentEquals(
                 expected,
-                buffer.nextByteArray()
+                buffer.nextByteArray(),
             )
 
             assertEquals(buffer.limit.coerceAtLeast(0), buffer.limit) // keep buffer referenced
@@ -86,14 +100,14 @@ class NativeBufferVariableArrayTest {
 
             assertEquals(
                 Int.sizeBytes(layout) + expected.sizeBytes(layout),
-                buffer.position
+                buffer.position,
             )
 
             buffer.flip()
 
             assertContentEquals(
                 expected,
-                buffer.nextShortArray()
+                buffer.nextShortArray(),
             )
 
             buffer.release()
@@ -108,14 +122,14 @@ class NativeBufferVariableArrayTest {
 
             assertEquals(
                 Int.sizeBytes(layout) + expected.sizeBytes(layout),
-                buffer.position
+                buffer.position,
             )
 
             buffer.flip()
 
             assertContentEquals(
                 expected,
-                buffer.nextIntArray()
+                buffer.nextIntArray(),
             )
 
             buffer.release()
@@ -130,14 +144,14 @@ class NativeBufferVariableArrayTest {
 
             assertEquals(
                 Int.sizeBytes(layout) + expected.sizeBytes(layout),
-                buffer.position
+                buffer.position,
             )
 
             buffer.flip()
 
             assertContentEquals(
                 expected,
-                buffer.nextLongArray()
+                buffer.nextLongArray(),
             )
 
             buffer.release()
@@ -152,14 +166,14 @@ class NativeBufferVariableArrayTest {
 
             assertEquals(
                 Int.sizeBytes(layout) + expected.sizeBytes(layout),
-                buffer.position
+                buffer.position,
             )
 
             buffer.flip()
 
             assertFloatArrayEquals(
                 expected,
-                buffer.nextFloatArray()
+                buffer.nextFloatArray(),
             )
 
             buffer.release()
@@ -174,14 +188,14 @@ class NativeBufferVariableArrayTest {
 
             assertEquals(
                 Int.sizeBytes(layout) + expected.sizeBytes(layout),
-                buffer.position
+                buffer.position,
             )
 
             buffer.flip()
 
             assertDoubleArrayEquals(
                 expected,
-                buffer.nextDoubleArray()
+                buffer.nextDoubleArray(),
             )
 
             buffer.release()

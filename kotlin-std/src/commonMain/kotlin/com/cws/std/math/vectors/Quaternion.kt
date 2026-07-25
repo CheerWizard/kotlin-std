@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.math.vectors
 
 import com.cws.std.math.operators.Radians
@@ -20,25 +35,24 @@ data class Quaternion(
     var z: Float = 0f,
     var w: Float = 0f,
 ) {
-
-    operator fun get(i: Int): Float {
-        return when (i) {
+    operator fun get(i: Int): Float =
+        when (i) {
             0 -> x
             1 -> y
             2 -> z
             3 -> w
             else -> throw IndexOutOfBoundsException("i=$i out of range [0, 3]")
         }
-    }
 
-    operator fun set(i: Int, v: Float) {
-        return when (i) {
-            0 -> x = v
-            1 -> y = v
-            2 -> z = v
-            3 -> w = v
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 3]")
-        }
+    operator fun set(
+        i: Int,
+        v: Float,
+    ) = when (i) {
+        0 -> x = v
+        1 -> y = v
+        2 -> z = v
+        3 -> w = v
+        else -> throw IndexOutOfBoundsException("i=$i out of range [0, 3]")
     }
 
     val length: Float get() {
@@ -49,52 +63,40 @@ data class Quaternion(
         return sqrt(x * x + y * y + z * z + w * w)
     }
 
-    fun normalize(): Quaternion {
-        return com.cws.std.math.operators.normalize(this, this)
-    }
+    fun normalize(): Quaternion =
+        com.cws.std.math.operators
+            .normalize(this, this)
 
-    operator fun plus(v: Float): Quaternion {
-        return Quaternion(x + v, y + v, z + v, w + v)
-    }
+    operator fun plus(v: Float): Quaternion = Quaternion(x + v, y + v, z + v, w + v)
 
-    operator fun minus(v: Float): Quaternion {
-        return Quaternion(x - v, y - v, z - v, w - v)
-    }
+    operator fun minus(v: Float): Quaternion = Quaternion(x - v, y - v, z - v, w - v)
 
-    operator fun times(v: Float): Quaternion {
-        return Quaternion(x * v, y * v, z * v, w * v)
-    }
+    operator fun times(v: Float): Quaternion = Quaternion(x * v, y * v, z * v, w * v)
 
-    operator fun div(v: Float): Quaternion {
-        return Quaternion(x / v, y / v, z / v, w / v)
-    }
+    operator fun div(v: Float): Quaternion = Quaternion(x / v, y / v, z / v, w / v)
 
-    operator fun plus(v: Quaternion): Quaternion {
-        return Quaternion(x + v.x, y + v.y, z + v.z, w + v.w)
-    }
+    operator fun plus(v: Quaternion): Quaternion = Quaternion(x + v.x, y + v.y, z + v.z, w + v.w)
 
-    operator fun minus(v: Quaternion): Quaternion {
-        return Quaternion(x - v.x, y - v.y, z - v.z, w - v.w)
-    }
+    operator fun minus(v: Quaternion): Quaternion = Quaternion(x - v.x, y - v.y, z - v.z, w - v.w)
 
-    operator fun times(v: Quaternion): Quaternion {
-        return Quaternion(
+    operator fun times(v: Quaternion): Quaternion =
+        Quaternion(
             w * v.x + x * v.w + y * v.z - z * v.y,
             w * v.y - x * v.z + y * v.w + z * v.x,
             w * v.z + x * v.y - y * v.x + z * v.w,
-            w * v.w - x * v.x - y * v.y - z * v.z
+            w * v.w - x * v.x - y * v.y - z * v.z,
         )
-    }
 
-    operator fun div(v: Quaternion): Quaternion {
-        return Quaternion(x / v.x, y / v.y, z / v.z, w / v.w)
-    }
+    operator fun div(v: Quaternion): Quaternion = Quaternion(x / v.x, y / v.y, z / v.z, w / v.w)
 
-    operator fun unaryMinus(): Quaternion {
-        return Quaternion(-x, -y, -z, w)
-    }
+    operator fun unaryMinus(): Quaternion = Quaternion(-x, -y, -z, w)
 
-    fun fromAngle(nx: Float, ny: Float, nz: Float, r: Radians): Quaternion {
+    fun fromAngle(
+        nx: Float,
+        ny: Float,
+        nz: Float,
+        r: Radians,
+    ): Quaternion {
         x = nx * sin(r * 0.5f)
         y = ny * sin(r * 0.5f)
         z = nz * sin(r * 0.5f)
@@ -102,7 +104,10 @@ data class Quaternion(
         return this
     }
 
-    fun fromAngle(n: Float3, r: Radians): Quaternion = fromAngle(n.x, n.y, n.z, r)
+    fun fromAngle(
+        n: Float3,
+        r: Radians,
+    ): Quaternion = fromAngle(n.x, n.y, n.z, r)
 
     fun rotate(n: Float3): Quaternion {
         val q = this
@@ -110,7 +115,10 @@ data class Quaternion(
         return q * r.fromAngle(n, 0f.radians) * -q
     }
 
-    fun slerp(q: Quaternion, t: Float): Quaternion {
+    fun slerp(
+        q: Quaternion,
+        t: Float,
+    ): Quaternion {
         val q1 = this
         val q2 = q
 
@@ -133,5 +141,4 @@ data class Quaternion(
             coeff1 * q1.w + coeff2 * q2.w,
         ).normalize()
     }
-
 }

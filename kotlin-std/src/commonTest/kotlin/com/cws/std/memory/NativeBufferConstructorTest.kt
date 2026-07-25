@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.memory
 
 import kotlin.test.Test
@@ -6,19 +21,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class NativeBufferConstructorTest {
-
     @Test
     fun `create buffer with every constructor configuration`() {
         for (layout in MemoryLayout.entries) {
             for (endian in Endian.entries) {
                 for (boundary in MemoryBoundary.entries) {
-
-                    val buffer = NativeBuffer(
-                        capacity = 256,
-                        memoryLayout = layout,
-                        endian = endian,
-                        memoryBoundary = boundary
-                    )
+                    val buffer =
+                        NativeBuffer(
+                            capacity = 256,
+                            memoryLayout = layout,
+                            endian = endian,
+                            memoryBoundary = boundary,
+                        )
 
                     assertEquals(256, buffer.limit)
                     assertEquals(layout, buffer.memoryLayout)
@@ -34,19 +48,26 @@ class NativeBufferConstructorTest {
 
     @Test
     fun `create heap buffer from byte array`() {
-        val bytes = byteArrayOf(
-            1, 2, 3, 4,
-            5, 6, 7, 8
-        )
+        val bytes =
+            byteArrayOf(
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+            )
 
         for (layout in MemoryLayout.entries) {
             for (endian in Endian.entries) {
-
-                val buffer = NativeBuffer(
-                    buffer = bytes,
-                    memoryLayout = layout,
-                    endian = endian
-                )
+                val buffer =
+                    NativeBuffer(
+                        buffer = bytes,
+                        memoryLayout = layout,
+                        endian = endian,
+                    )
 
                 assertEquals(bytes.size, buffer.limit)
                 assertEquals(layout, buffer.memoryLayout)
@@ -54,11 +75,12 @@ class NativeBufferConstructorTest {
                 assertEquals(MemoryBoundary.KOTLIN_HEAP, buffer.memoryBoundary)
                 assertEquals(0, buffer.position)
 
-                val copied = buffer.copyToByteArray(
-                    ByteArray(bytes.size),
-                    0,
-                    bytes.size
-                )
+                val copied =
+                    buffer.copyToByteArray(
+                        ByteArray(bytes.size),
+                        0,
+                        bytes.size,
+                    )
 
                 assertContentEquals(bytes, copied)
 
@@ -71,13 +93,13 @@ class NativeBufferConstructorTest {
     fun `wrap external memory address`() {
         for (layout in MemoryLayout.entries) {
             for (endian in Endian.entries) {
-
-                val buffer = NativeBuffer(
-                    address = 123456789L,
-                    capacity = 512,
-                    memoryLayout = layout,
-                    endian = endian
-                )
+                val buffer =
+                    NativeBuffer(
+                        address = 123456789L,
+                        capacity = 512,
+                        memoryLayout = layout,
+                        endian = endian,
+                    )
 
 //                assertEquals(123456789L, buffer.address)
                 assertEquals(512, buffer.limit)
@@ -112,17 +134,18 @@ class NativeBufferConstructorTest {
 
     @Test
     fun `capacity is preserved for different sizes`() {
-        val capacities = listOf(
-            8,
-            16,
-            32,
-            64,
-            128,
-            256,
-            512,
-            1024,
-            4096
-        )
+        val capacities =
+            listOf(
+                8,
+                16,
+                32,
+                64,
+                128,
+                256,
+                512,
+                1024,
+                4096,
+            )
 
         for (capacity in capacities) {
             val buffer = NativeBuffer(capacity)
@@ -135,19 +158,21 @@ class NativeBufferConstructorTest {
 
     @Test
     fun `memory boundary helper returns expected value`() {
-        val heap = NativeBuffer(
-            capacity = 1024,
-            memoryBoundary = MemoryBoundary.KOTLIN_HEAP
-        )
+        val heap =
+            NativeBuffer(
+                capacity = 1024,
+                memoryBoundary = MemoryBoundary.KOTLIN_HEAP,
+            )
 
         assertTrue(heap.isHeapBoundary())
 
         heap.release()
 
-        val external = NativeBuffer(
-            capacity = 1024,
-            memoryBoundary = MemoryBoundary.EXTERNAL
-        )
+        val external =
+            NativeBuffer(
+                capacity = 1024,
+                memoryBoundary = MemoryBoundary.EXTERNAL,
+            )
 
         assertTrue(!external.isHeapBoundary())
 
@@ -156,10 +181,11 @@ class NativeBufferConstructorTest {
 
     @Test
     fun `large kotlin heap buffer is not considered heap boundary`() {
-        val buffer = NativeBuffer(
-            capacity = KOTLIN_HEAP_MAX_CAPACITY,
-            memoryBoundary = MemoryBoundary.KOTLIN_HEAP
-        )
+        val buffer =
+            NativeBuffer(
+                capacity = KOTLIN_HEAP_MAX_CAPACITY,
+                memoryBoundary = MemoryBoundary.KOTLIN_HEAP,
+            )
 
         assertTrue(!buffer.isHeapBoundary())
 

@@ -1,5 +1,19 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 @file:OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
-
 package com.cws.std.platform
 
 import kotlinx.cinterop.ByteVar
@@ -48,8 +62,18 @@ actual fun PlatformInfo.fetchMemoryInfo(): MemoryInfo {
     // vm_stat reports page counts; multiply by page size (usually 4096 or 16384 on Apple Silicon)
     val pageSize = runCommand("sysctl -n hw.pagesize").toLongOrNull() ?: 4096L
     val vmStat = runCommand("vm_stat")
-    val active = Regex("Pages active:\\s+(\\d+)").find(vmStat)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-    val wired = Regex("Pages wired down:\\s+(\\d+)").find(vmStat)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+    val active =
+        Regex("Pages active:\\s+(\\d+)")
+            .find(vmStat)
+            ?.groupValues
+            ?.get(1)
+            ?.toLongOrNull() ?: 0L
+    val wired =
+        Regex("Pages wired down:\\s+(\\d+)")
+            .find(vmStat)
+            ?.groupValues
+            ?.get(1)
+            ?.toLongOrNull() ?: 0L
     val used = (active + wired) * pageSize
     val free = total - used
     return MemoryInfo(
@@ -62,20 +86,18 @@ actual fun PlatformInfo.fetchMemoryInfo(): MemoryInfo {
 
 actual fun PlatformInfo.fetchCurrentProcessId(): Int = getpid()
 
-actual fun PlatformInfo.fetchCurrentThreadId(): Int {
-    return memScoped {
+actual fun PlatformInfo.fetchCurrentThreadId(): Int =
+    memScoped {
         val id = alloc<ULongVar>()
         pthread_threadid_np(pthread_self(), id.ptr)
         id.value.toInt()
     }
-}
 
-actual fun PlatformInfo.fetchCurrentThreadName(): String {
-    return memScoped {
+actual fun PlatformInfo.fetchCurrentThreadName(): String =
+    memScoped {
         val name = allocArray<ByteVar>(64)
         pthread_getname_np(pthread_self(), name, 64u)
         name.toKString().trim()
     }
-}
 
 actual fun PlatformInfo.fetchMaxThreadCount(): Int = maxOf(1, Platform.getAvailableProcessors() - 1)

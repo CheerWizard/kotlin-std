@@ -1,17 +1,35 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.math.operators
 
-import com.cws.std.math.vectors.Quaternion
 import com.cws.std.math.vectors.Float2
 import com.cws.std.math.vectors.Float3
 import com.cws.std.math.vectors.Float4
 import com.cws.std.math.vectors.Int2
 import com.cws.std.math.vectors.Int3
 import com.cws.std.math.vectors.Int4
+import com.cws.std.math.vectors.Quaternion
 import com.cws.std.math.vectors.UInt2
 import com.cws.std.math.vectors.UInt3
 import com.cws.std.math.vectors.UInt4
 
-fun normalize(v: Float2, out: Float2): Float2 {
+fun normalize(
+    v: Float2,
+    out: Float2,
+): Float2 {
     val l = v.length
     if (l == 0f) return out
     out.x = v.x / l
@@ -21,7 +39,10 @@ fun normalize(v: Float2, out: Float2): Float2 {
 
 fun normalize(v: Float2): Float2 = normalize(v, v)
 
-fun normalize(v: Int2, out: Int2): Int2 {
+fun normalize(
+    v: Int2,
+    out: Int2,
+): Int2 {
     val l = v.length
     if (l == 0) return out
     out.x = v.x / l
@@ -31,7 +52,10 @@ fun normalize(v: Int2, out: Int2): Int2 {
 
 fun normalize(v: Int2): Int2 = normalize(v, v)
 
-fun normalize(v: UInt2, out: UInt2): UInt2 {
+fun normalize(
+    v: UInt2,
+    out: UInt2,
+): UInt2 {
     val l = v.length
     if (l == 0u) return out
     out.x = v.x / l
@@ -41,7 +65,10 @@ fun normalize(v: UInt2, out: UInt2): UInt2 {
 
 fun normalize(v: UInt2): UInt2 = normalize(v, v)
 
-fun normalize(v: Float3, out: Float3): Float3 {
+fun normalize(
+    v: Float3,
+    out: Float3,
+): Float3 {
     val l = v.length
     if (l == 0f) return out
     out.x = v.x / l
@@ -52,7 +79,10 @@ fun normalize(v: Float3, out: Float3): Float3 {
 
 fun normalize(v: Float3): Float3 = normalize(v, v)
 
-fun normalize(v: Int3, out: Int3): Int3 {
+fun normalize(
+    v: Int3,
+    out: Int3,
+): Int3 {
     val l = v.length
     if (l == 0) return out
     out.x = v.x / l
@@ -63,7 +93,10 @@ fun normalize(v: Int3, out: Int3): Int3 {
 
 fun normalize(v: Int3): Int3 = normalize(v, v)
 
-fun normalize(v: UInt3, out: UInt3): UInt3 {
+fun normalize(
+    v: UInt3,
+    out: UInt3,
+): UInt3 {
     val l = v.length
     if (l == 0u) return out
     out.x = v.x / l
@@ -74,7 +107,10 @@ fun normalize(v: UInt3, out: UInt3): UInt3 {
 
 fun normalize(v: UInt3): UInt3 = normalize(v, v)
 
-fun normalize(v: Float4, out: Float4): Float4 {
+fun normalize(
+    v: Float4,
+    out: Float4,
+): Float4 {
     val l = v.length
     if (l == 0f) return out
     out.x = v.x / l
@@ -86,7 +122,10 @@ fun normalize(v: Float4, out: Float4): Float4 {
 
 fun normalize(v: Float4): Float4 = normalize(v, v)
 
-fun normalize(v: Int4, out: Int4): Int4 {
+fun normalize(
+    v: Int4,
+    out: Int4,
+): Int4 {
     val l = v.length
     if (l == 0) return out
     out.x = v.x / l
@@ -98,7 +137,10 @@ fun normalize(v: Int4, out: Int4): Int4 {
 
 fun normalize(v: Int4): Int4 = normalize(v, v)
 
-fun normalize(v: UInt4, out: UInt4): UInt4 {
+fun normalize(
+    v: UInt4,
+    out: UInt4,
+): UInt4 {
     val l = v.length
     if (l == 0u) return out
     out.x = v.x / l
@@ -110,7 +152,10 @@ fun normalize(v: UInt4, out: UInt4): UInt4 {
 
 fun normalize(v: UInt4): UInt4 = normalize(v, v)
 
-fun normalize(v: Quaternion, out: Quaternion): Quaternion {
+fun normalize(
+    v: Quaternion,
+    out: Quaternion,
+): Quaternion {
     val l = v.length
     if (l == 0f) return out
     out.x = v.x / l

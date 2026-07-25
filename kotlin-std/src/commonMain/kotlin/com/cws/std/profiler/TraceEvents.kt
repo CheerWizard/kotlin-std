@@ -1,17 +1,36 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.cws.std.profiler
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class TraceScope(val value: String) {
+enum class TraceScope(
+    val value: String,
+) {
     GLOBAL("g"),
     PROCESS("p"),
     THREAD("t"),
 }
 
 @Serializable
-enum class TracePhase(val value: String) {
+enum class TracePhase(
+    val value: String,
+) {
     BEGIN_DURATION("B"),
     END_DURATION("END"),
     COMPLETE("X"),
@@ -26,7 +45,9 @@ enum class TracePhase(val value: String) {
 }
 
 @Serializable
-enum class TraceColor(val value: String) {
+enum class TraceColor(
+    val value: String,
+) {
     GOOD("good"),
     BAD("bad"),
     TERRIBLE("terrible"),
@@ -66,5 +87,5 @@ data class TraceEvent(
 
 @Serializable
 data class TraceEvents(
-    val events: MutableList<TraceEvent>
+    val events: MutableList<TraceEvent>,
 )
