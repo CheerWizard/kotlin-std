@@ -459,20 +459,27 @@ dependencies {
 
 afterEvaluate {
     listOf(
+        "sourcesJar",
+        // JVM Desktop
         "compileKotlinDesktop",
         "desktopSourcesJar",
+        // Android
         "compileAndroidMain",
         "androidSourcesJar",
+        // JS
         "compileKotlinJs",
         "jsSourcesJar",
+        // WASM
         "compileKotlinWasmJs",
-        "sourcesJar",
+        "wasmJsSourcesJar",
+        // Native Desktop
         "compileKotlinLinuxX64",
         "linuxX64SourcesJar",
         "compileKotlinMacosArm64",
         "macosArm64SourcesJar",
         "compileKotlinMingwX64",
         "mingwX64SourcesJar",
+        // IOS
         "compileKotlinIosArm64",
         "compileKotlinIosSimulatorArm64",
         "compileKotlinIosX64",
