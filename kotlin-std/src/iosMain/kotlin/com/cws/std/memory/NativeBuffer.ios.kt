@@ -40,14 +40,14 @@ actual class NativeBuffer actual constructor(
 ) {
 
     actual constructor(address: Long, capacity: Int, memoryLayout: MemoryLayout, endian: Endian)
-            : this(capacity, memoryLayout, endian, MemoryBoundary.EXTERNAL) {
+            : this(0, memoryLayout, endian, MemoryBoundary.EXTERNAL) {
         this.buffer = address.toCPointer()
             ?: throw RuntimeException("Failed to convert Long ptr to Native CPointer!")
         this.heapBuffer = null
     }
 
     actual constructor(buffer: ByteArray, memoryLayout: MemoryLayout, endian: Endian)
-            : this(buffer.size, memoryLayout, endian, MemoryBoundary.KOTLIN_HEAP) {
+            : this(0, memoryLayout, endian, MemoryBoundary.KOTLIN_HEAP) {
         this.buffer = null
         this.heapBuffer = buffer
     }
@@ -64,8 +64,17 @@ actual class NativeBuffer actual constructor(
 
     actual var limit = _capacity
 
-    var buffer: CPointer<ByteVar>? = if (isHeapBoundary(capacity)) null else malloc(capacity.toULong())?.reinterpret()
-    var heapBuffer: ByteArray? = if (isHeapBoundary(capacity)) ByteArray(capacity) else null
+    var buffer: CPointer<ByteVar>? =
+        when {
+            capacity <= 0 || isHeapBoundary(capacity) -> null
+            else -> malloc(capacity.toULong())?.reinterpret()
+        }
+
+    var heapBuffer: ByteArray? =
+        when {
+            capacity <= 0 || !isHeapBoundary(capacity) -> null
+            else -> ByteArray(capacity)
+        }
 
     actual val address: Long = buffer?.rawValue?.toLong() ?: 0L
 

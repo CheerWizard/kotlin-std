@@ -21,13 +21,12 @@ import org.khronos.webgl.Int8Array
 import org.khronos.webgl.get
 import org.khronos.webgl.set
 import org.khronos.webgl.toInt8Array
-import kotlin.js.ExperimentalWasmJsInterop
 
 actual class NativeBuffer actual constructor(
     capacity: Int,
     memoryLayout: MemoryLayout,
     endian: Endian,
-    memoryBoundary: MemoryBoundary // not used for web
+    memoryBoundary: MemoryBoundary
 ) {
 
     actual constructor(
@@ -35,16 +34,17 @@ actual class NativeBuffer actual constructor(
         capacity: Int,
         memoryLayout: MemoryLayout,
         endian: Endian,
-    ) : this(capacity, memoryLayout, endian, MemoryBoundary.EXTERNAL)
+    ) : this(0, memoryLayout, endian, MemoryBoundary.EXTERNAL)
 
     actual constructor(
         buffer: ByteArray,
         memoryLayout: MemoryLayout,
         endian: Endian
-    ) : this(buffer.size, memoryLayout, endian, MemoryBoundary.KOTLIN_HEAP) {
-        bytes = buffer.toInt8Array()
+    ) : this(0, memoryLayout, endian, MemoryBoundary.KOTLIN_HEAP) {
+        val bytes = buffer.toInt8Array()
+        this.bytes = bytes
         this.buffer = bytes.buffer
-        dataView = DataView(this.buffer)
+        dataView = DataView(bytes.buffer)
     }
 
     actual val endian: Endian = endian
@@ -56,14 +56,23 @@ actual class NativeBuffer actual constructor(
         internal set
     actual val address: Long get() = 0L
 
-    var buffer = ArrayBuffer(capacity)
-    private var bytes = Int8Array(buffer)
-    internal var dataView = DataView(buffer)
+    var buffer: ArrayBuffer? = null
+    private var bytes: Int8Array? = null
+    internal var dataView: DataView? = null
 
-    actual var limit: Int = buffer.byteLength
+    actual var limit: Int = buffer?.byteLength ?: 0
         private set
 
-    private val capacity: Int get() = buffer.byteLength
+    private val capacity: Int get() = buffer?.byteLength ?: 0
+
+    init {
+        if (capacity > 0) {
+            val buffer = ArrayBuffer(capacity)
+            this.buffer = buffer
+            bytes = Int8Array(buffer)
+            dataView = DataView(buffer)
+        }
+    }
 
     actual fun view(): Any? = buffer
 
@@ -73,15 +82,19 @@ actual class NativeBuffer actual constructor(
             newCapacity == capacity || newCapacity == limit -> return
             newCapacity < capacity || newCapacity < limit -> {
                 // shrinking only reallocates view to buffer to smaller size, buffer stays unchanged
-                bytes = bytes.subarray(0, newCapacity)
-                dataView = DataView(bytes.buffer)
-                limit = newCapacity
+                bytes?.let { bytes ->
+                    this.bytes = bytes.subarray(0, newCapacity)
+                    dataView = DataView(bytes.buffer)
+                    limit = newCapacity
+                }
             }
             else -> {
                 // for growing reallocating new buffer with views
                 val newBuffer = ArrayBuffer(newCapacity)
                 val newBytes = Int8Array(newBuffer)
-                newBytes.set(bytes)
+                bytes?.let { bytes ->
+                    newBytes.set(bytes)
+                }
                 buffer = newBytes.buffer
                 bytes = newBytes
                 dataView = DataView(newBytes.buffer)
@@ -91,7 +104,11 @@ actual class NativeBuffer actual constructor(
         position = minOf(oldPosition, newCapacity)
     }
 
-    actual fun release() = Unit
+    actual fun release() {
+        buffer = null
+        bytes = null
+        dataView = null
+    }
 
     actual fun copyTo(
         dest: NativeBuffer,
@@ -99,26 +116,33 @@ actual class NativeBuffer actual constructor(
         destIndex: Int,
         sizeBytes: Int,
     ) {
-        dest.bytes.set(this.bytes.subarray(srcIndex, srcIndex + sizeBytes), destIndex)
+        val bytes = this.bytes
+        val destBytes = dest.bytes
+        if (bytes == null || destBytes == null) return
+        destBytes.set(bytes.subarray(srcIndex, srcIndex + sizeBytes), destIndex)
     }
 
     actual fun setTo(value: Byte, destIndex: Int, sizeBytes: Int) {
+        val bytes = bytes ?: return
         repeat(sizeBytes) { i -> bytes[destIndex + i] = value }
     }
 
     actual fun setByte(index: Int, value: Byte) {
+        val bytes = bytes ?: return
         bytes[index] = value
     }
 
     actual fun getByte(index: Int): Byte {
+        val bytes = bytes ?: return 0
         return bytes[index]
     }
 
     actual fun setByteArray(index: Int, array: ByteArray) {
-        bytes.set(array.toInt8Array(), index)
+        bytes?.set(array.toInt8Array(), index)
     }
 
     actual fun setCharArray(index: Int, array: CharArray) {
+        val dataView = dataView ?: return
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             dataView.setInt16(index + i * 2, array[i].code.toShort(), littleEndian)
@@ -126,6 +150,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun setShortArray(index: Int, array: ShortArray) {
+        val dataView = dataView ?: return
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             dataView.setInt16(index + i * 2, array[i], littleEndian)
@@ -133,6 +158,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun setIntArray(index: Int, array: IntArray) {
+        val dataView = dataView ?: return
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             dataView.setInt32(index + i * 4, array[i], littleEndian)
@@ -140,6 +166,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun setFloatArray(index: Int, array: FloatArray) {
+        val dataView = dataView ?: return
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             dataView.setFloat32(index + i * 4, array[i], littleEndian)
@@ -147,12 +174,14 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun setLongArray(index: Int, array: LongArray) {
+        val dataView = dataView ?: return
         array.forEachIndexed { i, value ->
-            jsSetLong(index + i * 8, value)
+            jsSetLong(dataView, index + i * 8, value)
         }
     }
 
     actual fun setDoubleArray(index: Int, array: DoubleArray) {
+        val dataView = dataView ?: return
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             dataView.setFloat64(index + i * 8, array[i], littleEndian)
@@ -160,6 +189,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun copyToByteArray(array: ByteArray, offset: Int, sizeBytes: Int): ByteArray {
+        val bytes = bytes ?: return byteArrayOf()
         for (i in 0 until sizeBytes) {
             array[i] = bytes[offset + i]
         }
@@ -167,6 +197,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun copyToCharArray(array: CharArray, offset: Int, sizeBytes: Int): CharArray {
+        val dataView = dataView ?: return charArrayOf()
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             array[i] = dataView.getInt16(offset + i * 2, littleEndian).toInt().toChar()
@@ -175,6 +206,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun copyToShortArray(array: ShortArray, offset: Int, sizeBytes: Int): ShortArray {
+        val dataView = dataView ?: return shortArrayOf()
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             array[i] = dataView.getInt16(offset + i * 2, littleEndian)
@@ -183,6 +215,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun copyToIntArray(array: IntArray, offset: Int, sizeBytes: Int): IntArray {
+        val dataView = dataView ?: return intArrayOf()
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             array[i] = dataView.getInt32(offset + i * 4, littleEndian)
@@ -191,6 +224,7 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun copyToFloatArray(array: FloatArray, offset: Int, sizeBytes: Int): FloatArray {
+        val dataView = dataView ?: return floatArrayOf()
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             array[i] = dataView.getFloat32(offset + i * 4, littleEndian)
@@ -199,13 +233,15 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun copyToLongArray(array: LongArray, offset: Int, sizeBytes: Int): LongArray {
+        val dataView = dataView ?: return longArrayOf()
         repeat(array.size) { i ->
-            array[i] = jsGetLong(offset + i * 8)
+            array[i] = jsGetLong(dataView, offset + i * 8)
         }
         return array
     }
 
     actual fun copyToDoubleArray(array: DoubleArray, offset: Int, sizeBytes: Int): DoubleArray {
+        val dataView = dataView ?: return doubleArrayOf()
         val littleEndian = endian == Endian.LITTLE
         repeat(array.size) { i ->
             array[i] = dataView.getFloat64(offset + i * 8, littleEndian)
@@ -213,13 +249,13 @@ actual class NativeBuffer actual constructor(
         return array
     }
 
-    private fun jsSetLong(offset: Int, value: Long) {
+    private fun jsSetLong(dataView: DataView, offset: Int, value: Long) {
         val littleEndian = endian == Endian.LITTLE
         dataView.setInt32(offset, (value and 0xFFFFFFFFL).toInt(), littleEndian)
         dataView.setInt32(offset + 4, (value ushr 32).toInt(), littleEndian)
     }
 
-    private fun jsGetLong(offset: Int): Long {
+    private fun jsGetLong(dataView: DataView, offset: Int): Long {
         val littleEndian = endian == Endian.LITTLE
         val low  = dataView.getInt32(offset, littleEndian).toLong() and 0xFFFFFFFFL
         val high = dataView.getInt32(offset + 4, littleEndian).toLong() and 0xFFFFFFFFL

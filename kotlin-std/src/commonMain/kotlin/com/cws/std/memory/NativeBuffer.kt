@@ -20,6 +20,7 @@ enum class Endian {
     BIG,
 }
 
+// in web memory boundary is treated always as KOTLIN_HEAP, since there is no access to external C/C++ memory
 enum class MemoryBoundary {
     // memory will live in scope of Kotlin VM heap,
     // useful for data < KOTLIN_HEAP_MAX_CAPACITY or data that could be safely copied
