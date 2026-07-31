@@ -47,6 +47,16 @@ actual class NativeBuffer actual constructor(
         dataView = DataView(bytes.buffer)
     }
 
+    constructor(
+        buffer: ArrayBuffer,
+        memoryLayout: MemoryLayout,
+        endian: Endian
+    ) : this(0, memoryLayout, endian, MemoryBoundary.KOTLIN_HEAP) {
+        this.buffer = buffer
+        this.bytes = Int8Array(buffer)
+        dataView = DataView(buffer)
+    }
+
     actual val endian: Endian = endian
     actual val memoryLayout: MemoryLayout = memoryLayout
     actual var memoryBoundary: MemoryBoundary = memoryBoundary
