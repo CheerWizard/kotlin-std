@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "io.github.cheerwizard"
-version = "1.0.5"
+version = "1.0.6"
 
 spotless {
     kotlin {
@@ -142,6 +142,8 @@ kotlin {
         val webMain by creating {
             dependsOn(commonMain)
             dependencies {
+                api(libs.kotlin.web)
+                api(libs.kotlin.browser)
                 api(libs.kotlinx.browser)
             }
         }

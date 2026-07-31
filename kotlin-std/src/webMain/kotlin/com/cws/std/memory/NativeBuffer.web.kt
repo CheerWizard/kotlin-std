@@ -15,12 +15,12 @@
  */
 package com.cws.std.memory
 
-import org.khronos.webgl.ArrayBuffer
-import org.khronos.webgl.DataView
-import org.khronos.webgl.Int8Array
-import org.khronos.webgl.get
-import org.khronos.webgl.set
-import org.khronos.webgl.toInt8Array
+import js.buffer.ArrayBuffer
+import js.buffer.DataView
+import js.numbers.JsNumbers.toJsByte
+import js.numbers.JsNumbers.toKotlinByte
+import js.typedarrays.Int8Array
+import js.typedarrays.toInt8Array
 
 actual class NativeBuffer actual constructor(
     capacity: Int,
@@ -49,8 +49,8 @@ actual class NativeBuffer actual constructor(
 
     constructor(
         buffer: ArrayBuffer,
-        memoryLayout: MemoryLayout,
-        endian: Endian
+        memoryLayout: MemoryLayout = MemoryLayout.KOTLIN,
+        endian: Endian = Endian.LITTLE
     ) : this(0, memoryLayout, endian, MemoryBoundary.KOTLIN_HEAP) {
         this.buffer = buffer
         this.bytes = Int8Array(buffer)
@@ -64,11 +64,12 @@ actual class NativeBuffer actual constructor(
 
     actual var position: Int = 0
         internal set
+
     actual val address: Long get() = 0L
 
     var buffer: ArrayBuffer? = null
-    private var bytes: Int8Array? = null
-    internal var dataView: DataView? = null
+    private var bytes: Int8Array<ArrayBuffer>? = null
+    internal var dataView: DataView<ArrayBuffer>? = null
 
     actual var limit: Int = buffer?.byteLength ?: 0
         private set
@@ -134,17 +135,17 @@ actual class NativeBuffer actual constructor(
 
     actual fun setTo(value: Byte, destIndex: Int, sizeBytes: Int) {
         val bytes = bytes ?: return
-        repeat(sizeBytes) { i -> bytes[destIndex + i] = value }
+        repeat(sizeBytes) { i -> bytes[destIndex + i] = value.toJsByte() }
     }
 
     actual fun setByte(index: Int, value: Byte) {
         val bytes = bytes ?: return
-        bytes[index] = value
+        bytes[index] = value.toJsByte()
     }
 
     actual fun getByte(index: Int): Byte {
         val bytes = bytes ?: return 0
-        return bytes[index]
+        return bytes[index].toKotlinByte()
     }
 
     actual fun setByteArray(index: Int, array: ByteArray) {
@@ -201,7 +202,7 @@ actual class NativeBuffer actual constructor(
     actual fun copyToByteArray(array: ByteArray, offset: Int, sizeBytes: Int): ByteArray {
         val bytes = bytes ?: return byteArrayOf()
         for (i in 0 until sizeBytes) {
-            array[i] = bytes[offset + i]
+            array[i] = bytes[offset + i].toKotlinByte()
         }
         return array
     }
@@ -259,13 +260,13 @@ actual class NativeBuffer actual constructor(
         return array
     }
 
-    private fun jsSetLong(dataView: DataView, offset: Int, value: Long) {
+    private fun jsSetLong(dataView: DataView<ArrayBuffer>, offset: Int, value: Long) {
         val littleEndian = endian == Endian.LITTLE
         dataView.setInt32(offset, (value and 0xFFFFFFFFL).toInt(), littleEndian)
         dataView.setInt32(offset + 4, (value ushr 32).toInt(), littleEndian)
     }
 
-    private fun jsGetLong(dataView: DataView, offset: Int): Long {
+    private fun jsGetLong(dataView: DataView<ArrayBuffer>, offset: Int): Long {
         val littleEndian = endian == Endian.LITTLE
         val low  = dataView.getInt32(offset, littleEndian).toLong() and 0xFFFFFFFFL
         val high = dataView.getInt32(offset + 4, littleEndian).toLong() and 0xFFFFFFFFL
