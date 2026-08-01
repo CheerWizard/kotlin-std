@@ -28,6 +28,11 @@ plugins {
 group = "io.github.cheerwizard"
 version = "1.0.8"
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 spotless {
     kotlin {
         target("**/*.kt")
@@ -70,37 +75,34 @@ dependencies {
 
 // Publishing
 publishing {
-    publications.withType<MavenPublication> {
-        val pubName = name
-        val javadocJar = tasks.register("${pubName}JavadocJar", Jar::class) {
-            archiveClassifier.set("javadoc")
-            archiveAppendix.set(pubName)
-        }
-        artifact(javadocJar)
-        pom {
-            name.set("kotlid-std-gen")
-            description.set("KSP code generator to kotlin-std library")
-            url.set("https://github.com/CheerWizard/kotlin-std")
-
-            licenses {
-                license {
-                    name.set("Apache License, Version 2.0")
-                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                }
-            }
-
-            developers {
-                developer {
-                    id.set("cheerwizard")
-                    name.set("Cheer Wizard")
-                    email.set("mechanik2442@gmail.com")
-                }
-            }
-
-            scm {
-                connection.set("scm:git:github.com/CheerWizard/kotlin-std.git")
-                developerConnection.set("scm:git:ssh://github.com/CheerWizard/kotlin-std.git")
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            pom {
+                name.set("kotlid-std-gen")
+                description.set("KSP code generator to kotlin-std library")
                 url.set("https://github.com/CheerWizard/kotlin-std")
+
+                licenses {
+                    license {
+                        name.set("Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("cheerwizard")
+                        name.set("Cheer Wizard")
+                        email.set("mechanik2442@gmail.com")
+                    }
+                }
+
+                scm {
+                    connection.set("scm:git:github.com/CheerWizard/kotlin-std.git")
+                    developerConnection.set("scm:git:ssh://github.com/CheerWizard/kotlin-std.git")
+                    url.set("https://github.com/CheerWizard/kotlin-std")
+                }
             }
         }
     }
