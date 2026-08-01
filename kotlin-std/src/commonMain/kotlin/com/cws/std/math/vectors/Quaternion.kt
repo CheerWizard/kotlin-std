@@ -20,6 +20,7 @@ import com.cws.std.math.operators.dot
 import com.cws.std.math.operators.radians
 import com.cws.std.memory.MemoryLayout
 import com.cws.std.memory.NativeBuffer
+import com.cws.std.memory.NativeData
 import com.cws.std.memory.STD140_SIZE_BYTES
 import com.cws.std.memory.STD430_SIZE_BYTES
 import com.cws.std.memory.nextFloat
@@ -29,6 +30,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+@NativeData
 data class Quaternion(
     var x: Float = 0f,
     var y: Float = 0f,

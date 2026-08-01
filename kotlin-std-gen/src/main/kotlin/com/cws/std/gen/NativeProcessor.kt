@@ -340,9 +340,23 @@ class NativeProcessor(
                                 ?: error("Collection field '${field.name}' typeName is not ParameterizedTypeName: ${field.typeName::class.simpleName}")
 
                             when {
-                                field.type.isList || field.type.isSet -> {
+                                field.type.isArray -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
-                                        ?: error("List/Set field '${field.name}' has no type argument")
+                                        ?: error("Array field '${field.name}' has no type argument")
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
+                                }
+
+                                field.type.isList -> {
+                                    val elementType = parameterized.typeArguments.firstOrNull()
+                                        ?: error("List field '${field.name}' has no type argument")
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
+                                }
+
+                                field.type.isSet -> {
+                                    val elementType = parameterized.typeArguments.firstOrNull()
+                                        ?: error("Set field '${field.name}' has no type argument")
                                     val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
                                     addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
                                 }
@@ -411,6 +425,13 @@ class NativeProcessor(
                                 ?: error("Collection field '${field.name}' typeName is not ParameterizedTypeName: ${field.typeName::class.simpleName}")
 
                             when {
+                                field.type.isArray -> {
+                                    val elementType = parameterized.typeArguments.firstOrNull()
+                                        ?: error("Array field '${field.name}' has no type argument")
+                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec)
+                                    addStatement("  nextArray { $decodeElement },")
+                                }
+
                                 field.type.isList -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("List field '${field.name}' has no type argument")
@@ -583,6 +604,10 @@ class NativeProcessor(
 
             is ParameterizedTypeName -> {
                 when {
+                    nonNull.rawType.simpleName.isArray -> {
+                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec)
+                        "$bufferExpr.nextArray { $innerDecode }"
+                    }
                     nonNull.rawType.simpleName.isList -> {
                         val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec)
                         "$bufferExpr.nextList { $innerDecode }"

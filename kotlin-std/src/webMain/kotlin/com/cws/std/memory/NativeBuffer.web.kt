@@ -29,6 +29,7 @@ actual class NativeBuffer actual constructor(
     memoryBoundary: MemoryBoundary
 ) {
 
+    // not supported on web buffers
     actual constructor(
         address: Long,
         capacity: Int,
@@ -45,6 +46,7 @@ actual class NativeBuffer actual constructor(
         this.bytes = bytes
         this.buffer = bytes.buffer
         dataView = DataView(bytes.buffer)
+        limit = buffer.size
     }
 
     constructor(
@@ -55,6 +57,7 @@ actual class NativeBuffer actual constructor(
         this.buffer = buffer
         this.bytes = Int8Array(buffer)
         dataView = DataView(buffer)
+        limit = buffer.byteLength
     }
 
     actual val endian: Endian = endian
@@ -71,7 +74,7 @@ actual class NativeBuffer actual constructor(
     private var bytes: Int8Array<ArrayBuffer>? = null
     internal var dataView: DataView<ArrayBuffer>? = null
 
-    actual var limit: Int = buffer?.byteLength ?: 0
+    actual var limit: Int = 0
         private set
 
     private val capacity: Int get() = buffer?.byteLength ?: 0
@@ -82,6 +85,7 @@ actual class NativeBuffer actual constructor(
             this.buffer = buffer
             bytes = Int8Array(buffer)
             dataView = DataView(buffer)
+            limit = buffer.byteLength
         }
     }
 
@@ -119,6 +123,8 @@ actual class NativeBuffer actual constructor(
         buffer = null
         bytes = null
         dataView = null
+        limit = 0
+        position = 0
     }
 
     actual fun copyTo(

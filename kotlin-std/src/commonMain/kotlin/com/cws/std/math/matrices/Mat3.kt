@@ -18,7 +18,9 @@ package com.cws.std.math.matrices
 import com.cws.std.math.operators.inverse
 import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float3
+import com.cws.std.memory.NativeData
 
+@NativeData
 data class Mat3(
     var v1: Float3 = Float3(),
     var v2: Float3 = Float3(),

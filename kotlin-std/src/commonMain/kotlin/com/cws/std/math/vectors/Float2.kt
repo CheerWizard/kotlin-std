@@ -17,8 +17,10 @@ package com.cws.std.math.vectors
 
 import com.cws.std.math.matrices.Mat2
 import com.cws.std.math.operators.normalize
+import com.cws.std.memory.NativeData
 import kotlin.math.sqrt
 
+@NativeData
 data class Float2(
     var x: Float = 0f,
     var y: Float = 0f,

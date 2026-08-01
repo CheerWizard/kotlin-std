@@ -26,7 +26,7 @@ plugins {
 }
 
 group = "io.github.cheerwizard"
-version = "1.0.9"
+version = "1.0.10"
 
 java {
     withSourcesJar()

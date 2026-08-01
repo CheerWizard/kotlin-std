@@ -16,9 +16,11 @@
 package com.cws.std.math.vectors
 
 import com.cws.std.math.operators.sqrt
+import com.cws.std.memory.NativeData
 import com.cws.std.memory.STD140_SIZE_BYTES
 import com.cws.std.memory.STD430_SIZE_BYTES
 
+@NativeData
 data class Int2(
     var x: Int = 0,
     var y: Int = 0,

@@ -20,12 +20,15 @@ import com.cws.std.test.TestEnumOrdinal
 import com.cws.std.test.TestEnumRaw
 import com.cws.std.test.decodeTestData
 import com.cws.std.test.encode
+import com.cws.std.math.matrices.*
+import com.cws.std.math.vectors.*
 import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class NativeDataTest {
+
     @Test
     fun assert_test_data_encodes_decodes_to_same_value() {
         val testData =
@@ -57,20 +60,72 @@ class NativeDataTest {
                 floats = floatArrayOf(0.1f, 0.2f, 0.3f),
                 fixedDoubles = DoubleArray(36) { it.toDouble() },
                 doubles = doubleArrayOf(9.9, 8.8, 7.7),
-                data =
-                    listOf(
-                        TestData.NestedData(
-                            id = 1L,
-                            data =
-                                mapOf(
-                                    "data_1" to "some data",
-                                    "data_2" to "some data shqufbqvu9q",
-                                    "data_3" to "",
-                                    "data_4" to PI.toString(),
-                                ),
-                            subscribers = setOf("sub1", "sub2", "sub3", "sub4"),
+                data = listOf(
+                    TestData.NestedData(
+                        id = 1L,
+
+                        float2 = Float2(1.1f, 2.2f),
+                        float3 = Float3(3.3f, 4.4f, 5.5f),
+                        float4 = Float4(6.6f, 7.7f, 8.8f, 9.9f),
+
+                        int2 = Int2(10, 11),
+                        int3 = Int3(12, 13, 14),
+                        int4 = Int4(15, 16, 17, 18),
+
+                        uint2 = UInt2(19u, 20u),
+                        uInt3 = UInt3(21u, 22u, 23u),
+                        uInt4 = UInt4(24u, 25u, 26u, 27u),
+
+                        mat2 = Mat2(
+                            1f, 2f,
+                            3f, 4f
                         ),
-                    ),
+
+                        mat3 = Mat3(
+                            1f, 2f, 3f,
+                            4f, 5f, 6f,
+                            7f, 8f, 9f
+                        ),
+
+                        mat4 = Mat4(
+                            1f, 2f, 3f, 4f,
+                            5f, 6f, 7f, 8f,
+                            9f, 10f, 11f, 12f,
+                            13f, 14f, 15f, 16f
+                        ),
+
+                        quaternion = Quaternion(
+                            x = 0.1f,
+                            y = 0.2f,
+                            z = 0.3f,
+                            w = 1.0f
+                        ),
+
+                        transform = Transform(
+                            position = Float3(100f, 200f, 300f),
+                            rotation = Float3(
+                                x = 0.4f,
+                                y = 0.5f,
+                                z = 0.6f,
+                            ),
+                            scale = Float3(2f, 3f, 4f)
+                        ),
+
+                        data = mapOf(
+                            "data_1" to "some data",
+                            "data_2" to "some data shqufbqvu9q",
+                            "data_3" to "",
+                            "data_4" to PI.toString(),
+                        ),
+
+                        subscribers = setOf(
+                            "sub1",
+                            "sub2",
+                            "sub3",
+                            "sub4"
+                        )
+                    )
+                ),
             )
 
         // FIXME(Minor): strings have bugs for MemoryLayout.STD140 and MemoryLayout.STD430
@@ -98,8 +153,8 @@ class NativeDataTest {
         assertEquals(testData.name, decoded.name)
         assertEquals(testData.width, decoded.width)
         assertEquals(testData.height, decoded.height)
-        assertEquals(testData.x, decoded.x)
-        assertEquals(testData.y, decoded.y)
+        assertEquals(testData.x.toBits(), decoded.x.toBits())
+        assertEquals(testData.y.toBits(), decoded.y.toBits())
         assertEquals(testData.flag, decoded.flag)
         assertEquals(testData.age, decoded.age)
         assertEquals(testData.ordinalEnum, decoded.ordinalEnum)
@@ -123,8 +178,28 @@ class NativeDataTest {
         assertEquals(testData.data.size, decoded.data.size)
         testData.data.zip(decoded.data).forEachIndexed { index, (expected, actual) ->
             assertEquals(expected.id, actual.id, "NestedData[$index].id mismatch")
-            assertEquals(expected.data, actual.data, "NestedData[$index].data mismatch")
-            assertEquals(expected.subscribers, actual.subscribers, "NestedData[$index].subscribers mismatch")
+
+            assertEquals(expected.float2, actual.float2)
+            assertEquals(expected.float3, actual.float3)
+            assertEquals(expected.float4, actual.float4)
+
+            assertEquals(expected.int2, actual.int2)
+            assertEquals(expected.int3, actual.int3)
+            assertEquals(expected.int4, actual.int4)
+
+            assertEquals(expected.uint2, actual.uint2)
+            assertEquals(expected.uInt3, actual.uInt3)
+            assertEquals(expected.uInt4, actual.uInt4)
+
+            assertEquals(expected.mat2, actual.mat2)
+            assertEquals(expected.mat3, actual.mat3)
+            assertEquals(expected.mat4, actual.mat4)
+
+            assertEquals(expected.quaternion, actual.quaternion)
+            assertEquals(expected.transform, actual.transform)
+
+            assertEquals(expected.data, actual.data)
+            assertEquals(expected.subscribers, actual.subscribers)
         }
     }
 }

@@ -24,10 +24,12 @@ import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float3
 import com.cws.std.math.vectors.Float4
 import com.cws.std.math.vectors.Quaternion
+import com.cws.std.memory.NativeData
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
 
+@NativeData
 data class Mat4(
     var v1: Float4 = Float4(),
     var v2: Float4 = Float4(),

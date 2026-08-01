@@ -18,11 +18,26 @@ package com.cws.std.math.matrices
 import com.cws.std.math.operators.inverse
 import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float2
+import com.cws.std.memory.NativeData
 
+@NativeData
 data class Mat2(
     var v1: Float2 = Float2(),
     var v2: Float2 = Float2(),
 ) {
+    constructor(
+        m00: Float,
+        m01: Float,
+        m10: Float,
+        m11: Float,
+    ) : this() {
+        v1.x = m00
+        v1.y = m01
+
+        v2.x = m10
+        v2.y = m11
+    }
+
     operator fun get(i: Int): Float2 =
         when (i) {
             0 -> v1

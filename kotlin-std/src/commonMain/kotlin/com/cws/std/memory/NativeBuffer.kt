@@ -188,6 +188,13 @@ fun NativeBuffer.flip(): NativeBuffer {
 
 fun NativeBuffer.clone(): NativeBuffer = NativeBuffer(limit, memoryLayout, endian, memoryBoundary)
 
+fun NativeBuffer.setUByte(
+    index: Int,
+    value: UByte,
+) = setByte(index, value.toByte())
+
+fun NativeBuffer.getUByte(index: Int): UByte = getByte(index).toUByte()
+
 fun NativeBuffer.setBoolean(
     index: Int,
     value: Boolean,
@@ -293,6 +300,12 @@ fun NativeBuffer.setULongArray(
 fun NativeBuffer.nextByte(): Byte {
     val value = getByte(position)
     position += Byte.sizeBytes(memoryLayout)
+    return value
+}
+
+fun NativeBuffer.nextUByte(): UByte {
+    val value = getUByte(position)
+    position += UByte.sizeBytes(memoryLayout)
     return value
 }
 
@@ -451,6 +464,11 @@ fun NativeBuffer.nextStringUtf16(): String = nextCharArray().concatToString()
 
 fun NativeBuffer.nextStringUtf16(size: Int): String = nextCharArray(size).concatToString().trimEnd('\u0000')
 
+inline fun <reified T> NativeBuffer.nextArray(decode: () -> T): Array<T> {
+    val size = nextInt()
+    return Array(size) { decode() }
+}
+
 inline fun <T> NativeBuffer.nextList(decode: () -> T): List<T> {
     val size = nextInt()
     return List(size) { decode() }
@@ -477,6 +495,12 @@ fun NativeBuffer.pushByte(value: Byte?) {
     assertPosition()
     setByte(position, value ?: 0)
     position += Byte.sizeBytes(memoryLayout)
+}
+
+fun NativeBuffer.pushUByte(value: UByte?) {
+    assertPosition()
+    setUByte(position, value ?: 0u)
+    position += UByte.sizeBytes(memoryLayout)
 }
 
 fun NativeBuffer.pushBoolean(value: Boolean?) {

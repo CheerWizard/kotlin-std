@@ -16,7 +16,9 @@
 package com.cws.std.math.matrices
 
 import com.cws.std.math.vectors.Float3
+import com.cws.std.memory.NativeData
 
+@NativeData
 data class Transform(
     var position: Float3 = Float3(),
     var rotation: Float3 = Float3(),

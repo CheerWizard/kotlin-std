@@ -16,15 +16,15 @@
 package com.cws.std.gen
 
 val primitiveTypes = setOf(
-    "Boolean", "Byte",
-    "Short", "Char",
-    "Int", "Long",
-    "Float", "Double"
+    "Boolean", "Byte", "UByte",
+    "Short", "Char", "UShort",
+    "Int", "Long", "UInt", "ULong",
+    "Float", "Double",
 )
 val variableLengthTypes = setOf(
-    "ByteArray",
-    "ShortArray", "CharArray",
-    "IntArray", "LongArray",
+    "ByteArray", "UByteArray",
+    "ShortArray", "CharArray", "UShortArray",
+    "IntArray", "LongArray", "UIntArray", "ULongArray",
     "FloatArray", "DoubleArray",
     "String",
 )
@@ -42,6 +42,9 @@ val Field.isDynamic get() = (fixedSize == null) && isVariableLength
 
 val Field.isNested get() = !isPrimitive && !isVariableLength
 
+val String.isArray get() = this == "Array"
+val Field.isArray get() = type.isArray
+
 val String.isList get() = this == "List" || this == "MutableList" || this == "ArrayList"
 val Field.isList get() = type.isList
 
@@ -51,26 +54,35 @@ val Field.isSet get() = type.isSet
 val String.isMap get() = this == "Map" || this == "MutableMap" || this == "HashMap"
 val Field.isMap get() = type.isMap
 
-val String.isCollection get() = isList || isSet || isMap
+val String.isCollection get() = isArray || isList || isSet || isMap
 val Field.isCollection get() = type.isCollection
 
 val typesWithDefaults = mapOf(
     "Boolean" to "false",
     "Byte" to "0",
+    "UByte" to "0u",
     "Short" to "0",
+    "UShort" to "0u",
     "Char" to "'\"0\"'",
     "Int" to "0",
+    "UInt" to "0u",
     "Long" to "0L",
+    "ULong" to "0ul",
     "Float" to "0f",
     "Double" to "0.0",
     "ByteArray" to "ByteArray(0)",
+    "UByteArray" to "UByteArray(0)",
     "ShortArray" to "ShortArray(0)",
+    "UShortArray" to "UShortArray(0)",
     "CharArray" to "CharArray(0)",
     "IntArray" to "IntArray(0)",
+    "UIntArray" to "UIntArray(0)",
     "LongArray" to "LongArray(0)",
+    "ULongArray" to "ULongArray(0)",
     "FloatArray" to "FloatArray(0)",
     "DoubleArray" to "DoubleArray(0)",
     "String" to "\"\"",
+    "Array" to "arrayOf()",
     "List" to "emptyList()",
     "ArrayList" to "ArrayList()",
     "MutableList" to "mutableListOf()",

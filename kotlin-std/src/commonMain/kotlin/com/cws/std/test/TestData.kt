@@ -15,14 +15,14 @@
  */
 package com.cws.std.test
 
+import com.cws.std.math.vectors.*
+import com.cws.std.math.matrices.*
 import com.cws.std.memory.NativeData
 import com.cws.std.memory.NativeEnum
 import com.cws.std.memory.NativeFixedSize
 import com.cws.std.memory.NativeStringUtf16
 import kotlin.math.PI
-import kotlinx.serialization.Serializable
 
-@Serializable
 @NativeEnum
 enum class TestEnumOrdinal {
     Ordinal_0,
@@ -33,7 +33,6 @@ enum class TestEnumOrdinal {
     Ordinal_5,
 }
 
-@Serializable
 @NativeEnum
 enum class TestEnumRaw(val rawValue: Float) {
     Raw_0(0.125f),
@@ -44,7 +43,6 @@ enum class TestEnumRaw(val rawValue: Float) {
     Raw_5(PI.toFloat()),
 }
 
-@Serializable
 @NativeData
 data class TestData(
     val id: Long,
@@ -87,10 +85,23 @@ data class TestData(
     val data: List<NestedData>,
 ) {
 
-    @Serializable
     @NativeData
     data class NestedData(
         val id: Long,
+        val float2: Float2,
+        val float3: Float3,
+        val float4: Float4,
+        val int2: Int2,
+        val int3: Int3,
+        val int4: Int4,
+        val uint2: UInt2,
+        val uInt3: UInt3,
+        val uInt4: UInt4,
+        val mat2: Mat2,
+        val mat3: Mat3,
+        val mat4: Mat4,
+        val quaternion: Quaternion,
+        val transform: Transform,
         val data: Map<String, String>,
         val subscribers: Set<String>,
     )
