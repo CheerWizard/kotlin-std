@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "io.github.cheerwizard"
-version = "1.0.6"
+version = "1.0.7"
 
 spotless {
     kotlin {
@@ -458,7 +458,6 @@ fun Project.resolveSystemCmakePath(): String {
 dependencies {
     add("kspCommonMainMetadata", project(":kotlin-std-gen"))
 }
-
 afterEvaluate {
     listOf(
         "sourcesJar",

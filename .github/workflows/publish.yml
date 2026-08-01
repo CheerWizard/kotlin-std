@@ -29,8 +29,16 @@ jobs:
       - name: SpotlessCheck
         run: ./gradlew spotlessCheck
 
-      - name: Publish
+      - name: Publish kotlin-std
         run: ./gradlew :kotlin-std:publishAllPublicationsToCentralPortal
+        env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GPG_SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
+
+      - name: Publish kotlin-std-gen
+        run: ./gradlew :kotlin-std-gen:publishAllPublicationsToCentralPortal
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
