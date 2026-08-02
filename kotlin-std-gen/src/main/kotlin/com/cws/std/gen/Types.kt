@@ -126,3 +126,18 @@ fun String.sizeBytes(fixedSize: Int?, isStringUtf16: Boolean, ref: String): Stri
     }
     else -> null
 }
+
+fun String.sizeBytesPacked(isStringUtf16: Boolean, ref: String): String? = when {
+    isPrimitive -> "${this}.SIZE_BYTES"
+    isString -> {
+        if (isStringUtf16) {
+            "$ref.orEmpty().sizeBytesUtf16(memoryLayout)"
+        } else {
+            "$ref.orEmpty().sizeBytesUtf8(memoryLayout)"
+        }
+    }
+    isVariableLength -> {
+        "$ref.sizeBytes(memoryLayout)"
+    }
+    else -> null
+}

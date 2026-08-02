@@ -20,13 +20,12 @@ enum class Endian {
     BIG,
 }
 
-// in web memory boundary is treated always as KOTLIN_HEAP, since there is no access to external C/C++ memory
 enum class MemoryBoundary {
     // memory will live in scope of Kotlin VM heap,
     // useful for data < KOTLIN_HEAP_MAX_CAPACITY or data that could be safely copied
     KOTLIN_HEAP,
 
-    // memory will live in scope of external boundary like C/C++ or Wasm.
+    // memory will live in scope of external boundary like C/C++ or WASM buffer.
     // useful for data > KOTLIN_HEAP_MAX_CAPACITY, big chunks of data or data that should not be interrupted by Kotlin GC,
     // or if data is passed to C/C++ libraries
     EXTERNAL,
@@ -584,6 +583,16 @@ fun NativeBuffer.pushFixedByteArray(
     position += size * Byte.sizeBytes(memoryLayout)
 }
 
+fun NativeBuffer.pushPackedByteArray(
+    value: ByteArray?,
+) {
+    require(value != null) {
+        "pushPackedByteArray value == null"
+    }
+    setByteArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
 @OptIn(ExperimentalUnsignedTypes::class)
 fun NativeBuffer.pushUByteArray(value: UByteArray?) {
     if (value == null || value.isEmpty()) {
@@ -607,6 +616,17 @@ fun NativeBuffer.pushFixedUByteArray(
     position += size * UByte.sizeBytes(memoryLayout)
 }
 
+@OptIn(ExperimentalUnsignedTypes::class)
+fun NativeBuffer.pushPackedUByteArray(
+    value: UByteArray?,
+) {
+    require(value != null) {
+        "pushPackedUByteArray value == null"
+    }
+    setUByteArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
 fun NativeBuffer.pushShortArray(value: ShortArray?) {
     if (value == null || value.isEmpty()) {
         pushInt(0)
@@ -626,6 +646,16 @@ fun NativeBuffer.pushFixedShortArray(
     }
     setShortArray(position, value)
     position += size * Short.sizeBytes(memoryLayout)
+}
+
+fun NativeBuffer.pushPackedShortArray(
+    value: ShortArray?,
+) {
+    require(value != null) {
+        "pushPackedShortArray value == null"
+    }
+    setShortArray(position, value)
+    position += value.sizeBytes(memoryLayout)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
@@ -651,6 +681,17 @@ fun NativeBuffer.pushFixedUShortArray(
     position += size * UShort.sizeBytes(memoryLayout)
 }
 
+@OptIn(ExperimentalUnsignedTypes::class)
+fun NativeBuffer.pushPackedUShortArray(
+    value: UShortArray?,
+) {
+    require(value != null) {
+        "pushPackedUShortArray value == null"
+    }
+    setUShortArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
 fun NativeBuffer.pushCharArray(value: CharArray?) {
     if (value == null || value.isEmpty()) {
         pushInt(0)
@@ -672,6 +713,16 @@ fun NativeBuffer.pushFixedCharArray(
     position += size * Char.sizeBytes(memoryLayout)
 }
 
+fun NativeBuffer.pushPackedCharArray(
+    value: CharArray?,
+) {
+    require(value != null) {
+        "pushPackedCharArray value == null"
+    }
+    setCharArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
 fun NativeBuffer.pushIntArray(value: IntArray?) {
     if (value == null || value.isEmpty()) {
         pushInt(0)
@@ -691,6 +742,16 @@ fun NativeBuffer.pushFixedIntArray(
     }
     setIntArray(position, value)
     position += size * Int.sizeBytes(memoryLayout)
+}
+
+fun NativeBuffer.pushPackedIntArray(
+    value: IntArray?,
+) {
+    require(value != null) {
+        "pushPackedIntArray value == null"
+    }
+    setIntArray(position, value)
+    position += value.sizeBytes(memoryLayout)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
@@ -716,6 +777,17 @@ fun NativeBuffer.pushFixedUIntArray(
     position += size * UInt.sizeBytes(memoryLayout)
 }
 
+@OptIn(ExperimentalUnsignedTypes::class)
+fun NativeBuffer.pushPackedUIntArray(
+    value: UIntArray?,
+) {
+    require(value != null) {
+        "pushPackedUIntArray value == null"
+    }
+    setUIntArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
 fun NativeBuffer.pushLongArray(value: LongArray?) {
     if (value == null || value.isEmpty()) {
         pushInt(0)
@@ -735,6 +807,16 @@ fun NativeBuffer.pushFixedLongArray(
     }
     setLongArray(position, value)
     position += size * Long.sizeBytes(memoryLayout)
+}
+
+fun NativeBuffer.pushPackedLongArray(
+    value: LongArray?,
+) {
+    require(value != null) {
+        "pushPackedLongArray value == null"
+    }
+    setLongArray(position, value)
+    position += value.sizeBytes(memoryLayout)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
@@ -760,6 +842,17 @@ fun NativeBuffer.pushFixedULongArray(
     position += size * ULong.sizeBytes(memoryLayout)
 }
 
+@OptIn(ExperimentalUnsignedTypes::class)
+fun NativeBuffer.pushPackedULongArray(
+    value: ULongArray?,
+) {
+    require(value != null) {
+        "pushPackedULongArray value == null"
+    }
+    setULongArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
 fun NativeBuffer.pushFloatArray(value: FloatArray?) {
     if (value == null || value.isEmpty()) {
         pushInt(0)
@@ -779,6 +872,16 @@ fun NativeBuffer.pushFixedFloatArray(
     }
     setFloatArray(position, value)
     position += size * Float.sizeBytes(memoryLayout)
+}
+
+fun NativeBuffer.pushPackedFloatArray(
+    value: FloatArray?,
+) {
+    require(value != null) {
+        "pushPackedFloatArray value == null"
+    }
+    setFloatArray(position, value)
+    position += value.sizeBytes(memoryLayout)
 }
 
 fun NativeBuffer.pushDoubleArray(value: DoubleArray?) {
@@ -802,8 +905,22 @@ fun NativeBuffer.pushFixedDoubleArray(
     position += size * Double.sizeBytes(memoryLayout)
 }
 
+fun NativeBuffer.pushPackedDoubleArray(
+    value: DoubleArray?,
+) {
+    require(value != null) {
+        "pushFixedDoubleArray value == null or value.size != fixedSize"
+    }
+    setDoubleArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
 fun NativeBuffer.pushStringUtf8(value: String?) {
     pushByteArray(value?.encodeToByteArray())
+}
+
+fun NativeBuffer.pushPackedStringUtf8(value: String?) {
+    pushPackedByteArray(value?.encodeToByteArray())
 }
 
 fun NativeBuffer.pushFixedStringUtf8(
@@ -821,6 +938,10 @@ fun NativeBuffer.pushFixedStringUtf8(
 
 fun NativeBuffer.pushStringUtf16(value: String?) {
     pushCharArray(value?.toCharArray())
+}
+
+fun NativeBuffer.pushPackedStringUtf16(value: String?) {
+    pushPackedCharArray(value?.toCharArray())
 }
 
 fun NativeBuffer.pushFixedStringUtf16(
@@ -844,12 +965,30 @@ inline fun <T> NativeBuffer.pushCollection(
     items.forEach { encode(it) }
 }
 
+inline fun <T> NativeBuffer.pushPackedCollection(
+    items: Collection<T>,
+    encode: (T) -> Unit,
+) {
+    items.forEach { encode(it) }
+}
+
 inline fun <K, V> NativeBuffer.pushMap(
     map: Map<K, V>,
     encodeKey: (K) -> Unit,
     encodeValue: (V) -> Unit,
 ) {
     pushInt(map.size)
+    map.forEach { (k, v) ->
+        encodeKey(k)
+        encodeValue(v)
+    }
+}
+
+inline fun <K, V> NativeBuffer.pushPackedMap(
+    map: Map<K, V>,
+    encodeKey: (K) -> Unit,
+    encodeValue: (V) -> Unit,
+) {
     map.forEach { (k, v) ->
         encodeKey(k)
         encodeValue(v)

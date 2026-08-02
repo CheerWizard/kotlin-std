@@ -81,8 +81,11 @@ class NativeProcessor(
         val fileSpec = FileSpec.builder(packageName, className.simpleName)
 
         fileSpec.addFunction(buildSizeBytesFunction(fileSpec, className, fields))
+        fileSpec.addFunction(buildSizeBytesPackedFunction(fileSpec, className, fields))
         fileSpec.addFunction(buildEncodeToNewBuffer(fileSpec, className, fields))
+        fileSpec.addFunction(buildEncodePackedToNewBuffer(fileSpec, className, fields))
         fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields))
+        fileSpec.addFunction(buildEncodePackedToBuffer(fileSpec, className, fields))
         fileSpec.addFunction(buildDecodeFromByteArray(className))
         fileSpec.addFunction(buildDecodeFromBuffer(fileSpec, className, fields))
 
@@ -134,7 +137,9 @@ class NativeProcessor(
                 val field = rawValueProp.createField(offset = "0")
                 val fields = listOf(field)
                 fileSpec.addFunction(buildSizeBytesFunction(fileSpec, className, fields))
+                fileSpec.addFunction(buildSizeBytesPackedFunction(fileSpec, className, fields))
                 fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields))
+                fileSpec.addFunction(buildEncodePackedToBuffer(fileSpec, className, fields))
                 fileSpec.addFunction(buildDecodeFromByteArray(className))
                 fileSpec.addFunction(buildEnumDecodeFromBuffer(className, field))
                 fileSpec.addProperty(buildEnumValueProperty(className, field, useRawValue = true))
@@ -145,7 +150,9 @@ class NativeProcessor(
                 val field = ordinalProp.createField(offset = "0")
                 val fields = listOf(field)
                 fileSpec.addFunction(buildSizeBytesFunction(fileSpec, className, fields))
+                fileSpec.addFunction(buildSizeBytesPackedFunction(fileSpec, className, fields))
                 fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields))
+                fileSpec.addFunction(buildEncodePackedToBuffer(fileSpec, className, fields))
                 fileSpec.addFunction(buildDecodeFromByteArray(className))
                 fileSpec.addFunction(buildEnumOrdinalDecodeFromBuffer(className))
                 fileSpec.addProperty(buildEnumValueProperty(className, field, useRawValue = false))
@@ -188,7 +195,7 @@ class NativeProcessor(
                     sizeBytes ?: when {
                         field.isCollection -> {
                             when {
-                                field.type.isList || field.type.isSet -> {
+                                field.type.isArray || field.type.isList || field.type.isSet -> {
                                     val elementSize = collectionElementSizeExpr(fileSpec, field)
                                     "Int.SIZE_BYTES + ${field.name}.sumOf { $elementSize }"
                                 }
@@ -219,20 +226,108 @@ class NativeProcessor(
             .build()
     }
 
+    private fun buildSizeBytesPackedFunction(
+        fileSpec: FileSpec.Builder,
+        className: ClassName,
+        fields: List<Field>,
+    ): FunSpec {
+        return FunSpec.builder("sizeBytesPacked")
+            .addParameter(ParameterSpec("memoryLayout", memoryLayoutClass))
+            .receiver(className.copy(nullable = true))
+            .returns(INT)
+            .apply {
+                val parts = fields.map { field ->
+                    val sizeBytes = field.type.sizeBytesPacked(
+                        field.isStringUtf16,
+                        field.name
+                    )
+
+                    sizeBytes ?: when {
+                        field.isCollection -> {
+                            when {
+                                field.type.isArray || field.type.isList || field.type.isSet -> {
+                                    val elementSize = collectionElementSizePackedExpr(fileSpec, field)
+                                    "${field.name}.sumOf { $elementSize }"
+                                }
+
+                                field.type.isMap -> {
+                                    val keySize = collectionElementSizePackedExpr(fileSpec, field, key = true)
+                                    val valueSize = collectionElementSizePackedExpr(fileSpec, field, key = false)
+                                    "${field.name}.entries.sumOf { $keySize + $valueSize }"
+                                }
+
+                                else -> "0"
+                            }
+                        }
+
+                        field.isNested -> {
+                            val fieldClassName = field.typeName as ClassName
+                            fileSpec.addImport(fieldClassName.packageName, "sizeBytesPacked")
+                            "${field.name}.sizeBytesPacked(memoryLayout)"
+                        }
+
+                        else -> "0"
+                    }
+                }.ifEmpty { listOf("0") }
+
+                val expr = parts.joinToString(" + ")
+                addStatement("return if (this == null) 0 else $expr", className)
+            }
+            .build()
+    }
+
     private fun buildEncodeToNewBuffer(
         fileSpec: FileSpec.Builder,
         className: ClassName,
         fields: List<Field>
     ): FunSpec {
         return FunSpec.builder("encode")
-            .addParameter(ParameterSpec("memoryLayout", memoryLayoutClass))
-            .addParameter(ParameterSpec("endian", endianClass))
-            .addParameter(ParameterSpec("memoryBoundary", memoryBoundaryClass))
+            .addParameter(ParameterSpec("memoryLayout", memoryLayoutClass)
+                .toBuilder()
+                .defaultValue("MemoryLayout.KOTLIN")
+                .build()
+            )
+            .addParameter(ParameterSpec("endian", endianClass)
+                .toBuilder()
+                .defaultValue("Endian.LITTLE")
+                .build())
+            .addParameter(ParameterSpec("memoryBoundary", memoryBoundaryClass)
+                .toBuilder()
+                .defaultValue("MemoryBoundary.KOTLIN_HEAP")
+                .build())
             .receiver(className.copy(nullable = true))
             .returns(nativeBufferClass)
             .addStatement("if (this == null) return NativeBuffer(0)")
             .addStatement("val buffer = %T(capacity = sizeBytes(memoryLayout), memoryLayout = memoryLayout, endian = endian, memoryBoundary = memoryBoundary)", nativeBufferClass)
             .addStatement("encode(buffer)")
+            .addStatement("return buffer")
+            .build()
+    }
+
+    private fun buildEncodePackedToNewBuffer(
+        fileSpec: FileSpec.Builder,
+        className: ClassName,
+        fields: List<Field>
+    ): FunSpec {
+        return FunSpec.builder("encodePacked")
+            .addParameter(ParameterSpec("memoryLayout", memoryLayoutClass)
+                .toBuilder()
+                .defaultValue("MemoryLayout.KOTLIN")
+                .build()
+            )
+            .addParameter(ParameterSpec("endian", endianClass)
+                .toBuilder()
+                .defaultValue("Endian.LITTLE")
+                .build())
+            .addParameter(ParameterSpec("memoryBoundary", memoryBoundaryClass)
+                .toBuilder()
+                .defaultValue("MemoryBoundary.KOTLIN_HEAP")
+                .build())
+            .receiver(className.copy(nullable = true))
+            .returns(nativeBufferClass)
+            .addStatement("if (this == null) return NativeBuffer(0)")
+            .addStatement("val buffer = %T(capacity = sizeBytesPacked(memoryLayout), memoryLayout = memoryLayout, endian = endian, memoryBoundary = memoryBoundary)", nativeBufferClass)
+            .addStatement("encodePacked(buffer)")
             .addStatement("return buffer")
             .build()
     }
@@ -259,6 +354,30 @@ class NativeProcessor(
         val ref = if (field.isMap) (if (key) "it.key" else "it.value") else "it"
 
         return elementSizeExpr(fileSpec, elementType, ref)
+    }
+
+    private fun collectionElementSizePackedExpr(
+        fileSpec: FileSpec.Builder,
+        field: Field,
+        key: Boolean = true,
+    ): String {
+        val typeName = field.typeName
+
+        if (typeName !is ParameterizedTypeName) {
+            logger.warn("$TAG: Expected ParameterizedTypeName for collection field '${field.name}' but got ${typeName::class.simpleName}")
+            return "0"
+        }
+
+        val args = typeName.typeArguments
+        val elementType = if (field.isMap) {
+            if (key) args[0] else args[1]
+        } else {
+            args[0]
+        }
+
+        val ref = if (field.isMap) (if (key) "it.key" else "it.value") else "it"
+
+        return elementSizePackedExpr(fileSpec, elementType, ref)
     }
 
     private fun elementSizeExpr(
@@ -289,7 +408,7 @@ class NativeProcessor(
             }
 
             is ParameterizedTypeName -> when {
-                nonNull.rawType.simpleName.isList || nonNull.rawType.simpleName.isSet -> {
+                nonNull.rawType.simpleName.isArray || nonNull.rawType.simpleName.isList || nonNull.rawType.simpleName.isSet -> {
                     val inner = elementSizeExpr(fileSpec, nonNull.typeArguments.first(), "it")
                     "Int.SIZE_BYTES + $ref.sumOf { $inner }"
                 }
@@ -298,6 +417,52 @@ class NativeProcessor(
                     val keyExpr = elementSizeExpr(fileSpec, nonNull.typeArguments[0], "it.key")
                     val valueExpr = elementSizeExpr(fileSpec, nonNull.typeArguments[1], "it.value")
                     "Int.SIZE_BYTES + $ref.entries.sumOf { $keyExpr + $valueExpr }"
+                }
+
+                else -> error("Unsupported: ${nonNull.rawType.simpleName}")
+            }
+
+            else -> error("Unsupported type: $typeName")
+        }
+    }
+
+    private fun elementSizePackedExpr(
+        fileSpec: FileSpec.Builder,
+        typeName: TypeName,
+        ref: String,
+    ): String {
+        val nonNull = when (typeName) {
+            is ParameterizedTypeName -> typeName.copy(nullable = false)
+            is ClassName             -> typeName.copy(nullable = false)
+            else                     -> typeName
+        }
+
+        return when (nonNull) {
+            is ClassName -> {
+                val sizeBytes = nonNull.simpleName.sizeBytes(
+                    nonNull.nativeFixedSize(),
+                    nonNull.nativeStringUtf16(),
+                    ref
+                )
+
+                if (sizeBytes == null) {
+                    fileSpec.addImport(nonNull.packageName, "sizeBytesPacked")
+                    "$ref.sizeBytesPacked(memoryLayout)"
+                } else {
+                    sizeBytes
+                }
+            }
+
+            is ParameterizedTypeName -> when {
+                nonNull.rawType.simpleName.isArray || nonNull.rawType.simpleName.isList || nonNull.rawType.simpleName.isSet -> {
+                    val inner = elementSizePackedExpr(fileSpec, nonNull.typeArguments.first(), "it")
+                    "$ref.sumOf { $inner }"
+                }
+
+                nonNull.rawType.simpleName.isMap -> {
+                    val keyExpr = elementSizePackedExpr(fileSpec, nonNull.typeArguments[0], "it.key")
+                    val valueExpr = elementSizePackedExpr(fileSpec, nonNull.typeArguments[1], "it.value")
+                    "$ref.entries.sumOf { $keyExpr + $valueExpr }"
                 }
 
                 else -> error("Unsupported: ${nonNull.rawType.simpleName}")
@@ -377,6 +542,78 @@ class NativeProcessor(
                             val fieldClassName = field.typeName as ClassName
                             fileSpec.addImport(fieldClassName.packageName, "encode")
                             addStatement("${field.name}.encode(buffer)")
+                        }
+                    }
+                }
+            }
+            .build()
+    }
+
+    private fun buildEncodePackedToBuffer(
+        fileSpec: FileSpec.Builder,
+        className: ClassName,
+        fields: List<Field>,
+    ): FunSpec {
+        return FunSpec.builder("encodePacked")
+            .receiver(className.copy(nullable = true))
+            .addParameter("buffer", nativeBufferClass)
+            .addStatement("if (this == null) return")
+            .apply {
+                fields.forEach { field ->
+                    when {
+                        field.isPrimitive -> addStatement("buffer.push${field.type}(${field.name})")
+
+                        field.isVariableLength -> {
+                            val fieldType = if (field.isString) {
+                                if (field.isStringUtf16) "StringUtf16" else "StringUtf8"
+                            } else {
+                                field.type
+                            }
+                            addStatement("buffer.pushPacked${fieldType}(${field.name})")
+                        }
+
+                        field.isCollection -> {
+                            val parameterized = field.typeName as? ParameterizedTypeName
+                                ?: error("Collection field '${field.name}' typeName is not ParameterizedTypeName: ${field.typeName::class.simpleName}")
+
+                            when {
+                                field.type.isArray -> {
+                                    val elementType = parameterized.typeArguments.firstOrNull()
+                                        ?: error("Array field '${field.name}' has no type argument")
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
+                                }
+
+                                field.type.isList -> {
+                                    val elementType = parameterized.typeArguments.firstOrNull()
+                                        ?: error("List field '${field.name}' has no type argument")
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
+                                }
+
+                                field.type.isSet -> {
+                                    val elementType = parameterized.typeArguments.firstOrNull()
+                                        ?: error("Set field '${field.name}' has no type argument")
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
+                                }
+
+                                field.type.isMap -> {
+                                    val keyType = parameterized.typeArguments.getOrNull(0)
+                                        ?: error("Map field '${field.name}' has no key type")
+                                    val valueType = parameterized.typeArguments.getOrNull(1)
+                                        ?: error("Map field '${field.name}' has no value type")
+                                    val encodeKey = encodeExprFor(keyType, "buffer", fileSpec)
+                                    val encodeValue = encodeExprFor(valueType, "buffer", fileSpec)
+                                    addStatement("buffer.pushPackedMap(${field.name}, { $encodeKey }, { $encodeValue })")
+                                }
+                            }
+                        }
+
+                        field.isNested -> {
+                            val fieldClassName = field.typeName as ClassName
+                            fileSpec.addImport(fieldClassName.packageName, "encodePacked")
+                            addStatement("${field.name}.encodePacked(buffer)")
                         }
                     }
                 }
