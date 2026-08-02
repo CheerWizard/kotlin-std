@@ -101,7 +101,6 @@ data class TestData(
         val mat3: Mat3,
         val mat4: Mat4,
         val quaternion: Quaternion,
-        val transform: Transform,
         val data: Map<String, String>,
         val subscribers: Set<String>,
     )

@@ -101,16 +101,6 @@ class NativeDataTest {
                             w = 1.0f
                         ),
 
-                        transform = Transform(
-                            position = Float3(100f, 200f, 300f),
-                            rotation = Float3(
-                                x = 0.4f,
-                                y = 0.5f,
-                                z = 0.6f,
-                            ),
-                            scale = Float3(2f, 3f, 4f)
-                        ),
-
                         data = mapOf(
                             "data_1" to "some data",
                             "data_2" to "some data shqufbqvu9q",
@@ -196,7 +186,6 @@ class NativeDataTest {
             assertEquals(expected.mat4, actual.mat4)
 
             assertEquals(expected.quaternion, actual.quaternion)
-            assertEquals(expected.transform, actual.transform)
 
             assertEquals(expected.data, actual.data)
             assertEquals(expected.subscribers, actual.subscribers)

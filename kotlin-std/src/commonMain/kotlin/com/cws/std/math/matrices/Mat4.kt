@@ -123,27 +123,25 @@ data class Mat4(
     }
 
     fun identity(): Mat4 {
-        val m = this
+        v1.x = 1f
+        v1.y = 0f
+        v1.z = 0f
+        v1.w = 0f
 
-        m[0][0] = 1f
-        m[0][1] = 0f
-        m[0][2] = 0f
-        m[0][3] = 0f
+        v2.x = 0f
+        v2.y = 1f
+        v2.z = 0f
+        v2.w = 0f
 
-        m[1][1] = 1f
-        m[1][1] = 1f
-        m[1][1] = 1f
-        m[1][1] = 1f
+        v3.x = 0f
+        v3.y = 0f
+        v3.z = 1f
+        v3.w = 0f
 
-        m[2][2] = 1f
-        m[2][2] = 1f
-        m[2][2] = 1f
-        m[2][2] = 1f
-
-        m[3][3] = 1f
-        m[3][3] = 1f
-        m[3][3] = 1f
-        m[3][3] = 1f
+        v4.x = 0f
+        v4.y = 0f
+        v4.z = 0f
+        v4.w = 1f
 
         return this
     }
