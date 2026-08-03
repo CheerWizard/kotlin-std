@@ -15,8 +15,11 @@
  */
 package com.cws.std.math.matrices
 
+import com.cws.std.math.CoordinateSystem
+import com.cws.std.math.MathConfig
 import com.cws.std.math.operators.Degree
 import com.cws.std.math.operators.cross
+import com.cws.std.math.operators.dot
 import com.cws.std.math.operators.inverse
 import com.cws.std.math.operators.normalize
 import com.cws.std.math.operators.radians
@@ -358,36 +361,75 @@ fun RigidMatrix(translation: Float3, quaternion: Quaternion): Mat4 {
         .rotate(quaternion)
 }
 
-fun ViewMatrix(position: Float3, front: Float3, up: Float3): Mat4 {
-    val right = normalize(cross(front, up))
-    val f = -front
-    val c = cross(right, front)
-    val m = Mat4(
-        right.x, right.y, right.z, 0f,
-        c.x, c.y, c.z, 0f,
-        f.x, f.y, f.z, 0f,
-        position.x, position.y, position.z, 0f
-    )
-    return m.transpose().inverse()
+fun ViewMatrix(position: Float3, front: Float3, up: Float3, coordinateSystem: CoordinateSystem = MathConfig.coordinateSystem): Mat4 {
+    return when (coordinateSystem) {
+        CoordinateSystem.LEFT_HANDED -> {
+            val f = normalize(front)
+            val r = normalize(cross(up, f))
+            val u = cross(f, r)
+            Mat4(
+                r.x, r.y, r.z, -dot(r, position),
+                u.x, u.y, u.z, -dot(u, position),
+                f.x, f.y, f.z, -dot(f, position),
+                0f,  0f,  0f,  1f
+            )
+        }
+        CoordinateSystem.RIGHT_HANDED -> {
+            val f = normalize(front)
+            val r = normalize(cross(f, up))
+            val u = cross(r, f)
+            Mat4(
+                r.x,  r.y,  r.z,  -dot(r, position),
+                u.x,  u.y,  u.z,  -dot(u, position),
+                -f.x, -f.y, -f.z,   dot(f, position),
+                0f,   0f,   0f,    1f
+            )
+        }
+    }
 }
 
-fun OrthoMatrix(left: Float, right: Float, bottom: Float, top: Float, zNear: Float, zFar: Float): Mat4 {
-    return Mat4(
-        2.0f / (right - left), 0.0f, 0.0f, 0.0f,
-        0.0f, 2.0f / (bottom - top), 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f / (zNear - zFar), 0.0f,
-        -(right + left) / (right - left), -(bottom + top) / (bottom - top), zNear / (zNear - zFar), 1.0f
-    )
+fun PerspectiveMatrix(aspectRatio: Float, fov: Degree, zNear: Float, zFar: Float, coordinateSystem: CoordinateSystem = MathConfig.coordinateSystem): Mat4 {
+    return when (coordinateSystem) {
+        CoordinateSystem.LEFT_HANDED -> {
+            val f = 1.0f / tan((fov * 0.5f).radians.value)
+            val a = zFar / (zFar - zNear)
+            val b = -zNear * zFar / (zFar - zNear)
+            Mat4(
+                f / aspectRatio, 0f, 0f, 0f,
+                0f, -f, 0f, 0f,
+                0f, 0f, a, b,
+                0f, 0f, 1f, 0f,
+            )
+        }
+        CoordinateSystem.RIGHT_HANDED -> {
+            val f = 1.0f / tan((fov * 0.5f).radians.value)
+            val a = zFar / (zNear - zFar)
+            val b = zNear * zFar / (zNear - zFar)
+            Mat4(
+                f / aspectRatio, 0f, 0f, 0f,
+                0f, -f, 0f, 0f,
+                0f, 0f, a, b,
+                0f, 0f, -1f, 0f,
+            )
+        }
+    }
 }
 
-fun PerspectiveMatrix(aspectRatio: Float, fov: Degree, zNear: Float, zFar: Float): Mat4 {
-    val f = 1.0f / tan((fov * 0.5f).radians.value)
-    return Mat4(
-        f / aspectRatio, 0.0f, 0.0f, 0.0f,
-        0.0f, -f, 0.0f, 0.0f,
-        0.0f, 0.0f, zFar / (zNear - zFar), -1.0f,
-        0.0f, 0.0f, zNear * zFar / (zNear - zFar), 0.0f
-    )
+fun OrthoMatrix(left: Float, right: Float, bottom: Float, top: Float, zNear: Float, zFar: Float, coordinateSystem: CoordinateSystem = MathConfig.coordinateSystem): Mat4 {
+    return when (coordinateSystem) {
+        CoordinateSystem.LEFT_HANDED -> Mat4(
+            2.0f / (right - left), 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f / (bottom - top), 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f / (zFar - zNear), 0.0f,
+            -(right + left) / (right - left), -(bottom + top) / (bottom - top), -zNear / (zFar - zNear), 1.0f
+        )
+        CoordinateSystem.RIGHT_HANDED -> Mat4(
+            2.0f / (right - left), 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f / (bottom - top), 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f / (zNear - zFar), 0.0f,
+            -(right + left) / (right - left), -(bottom + top) / (bottom - top), zNear / (zNear - zFar), 1.0f
+        )
+    }
 }
 
 fun NormalMatrix4(model: Mat4): Mat4 {
