@@ -17,8 +17,10 @@ package com.cws.std.storage
 
 import com.cws.print.Print
 import com.cws.std.io.File
+import com.cws.std.io.flush
 import com.cws.std.io.readText
 import com.cws.std.io.write
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 internal expect fun getPreferencesFilepath(name: String): String
@@ -32,11 +34,13 @@ actual class Preferences(
 
     private val file = File(getPreferencesFilepath(name))
     private var data: MutableMap<String, String> =
-        try {
-            Json.decodeFromString(file.readText())
-        } catch (e: Exception) {
-            Print.e(TAG, "Failed to load json data from $name.json", e)
-            mutableMapOf()
+        runBlocking {
+            try {
+                Json.decodeFromString(file.readText())
+            } catch (e: Exception) {
+                Print.e(TAG, e) { "Failed to load json data from $name.json" }
+                mutableMapOf()
+            }
         }
 
     actual fun setByte(
@@ -140,19 +144,23 @@ actual class Preferences(
     }
 
     actual fun commit() {
-        try {
-            file.write(Json.encodeToString(data))
-            file.flush()
-        } catch (e: Exception) {
-            Print.e(TAG, "Failed to commit json data to $name.json", e)
+        runBlocking {
+            try {
+                file.write(Json.encodeToString(data))
+                file.flush()
+            } catch (e: Exception) {
+                Print.e(TAG, e) { "Failed to commit json data to $name.json" }
+            }
         }
     }
 
     actual fun sync() {
-        try {
-            data.putAll(Json.decodeFromString(file.readText()))
-        } catch (e: Exception) {
-            Print.e(TAG, "Failed to sync json data from $name.json", e)
+        runBlocking {
+            try {
+                data.putAll(Json.decodeFromString(file.readText()))
+            } catch (e: Exception) {
+                Print.e(TAG, e) { "Failed to sync json data from $name.json" }
+            }
         }
     }
 }

@@ -24,6 +24,14 @@ import org.w3c.fetch.RequestInit
 import org.w3c.files.Blob
 import kotlin.js.ExperimentalWasmJsInterop
 
+actual enum class FileMode { CREATE_IF_NOT_EXIST, CLEAR_WHEN_OPEN, OPEN_EXISTING }
+
+actual enum class FileAccess {
+    READ_ONLY,
+    WRITE_ONLY,
+    READ_WRITE,
+}
+
 // FIXME: currently its just in-memory file implementation, maybe will need to add real file caching
 actual class File actual constructor(
     private val filepath: String,
