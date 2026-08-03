@@ -17,94 +17,99 @@
 
 package com.cws.std.io
 
-import io.ktor.util.toJsArray
+import com.cws.std.memory.NativeBuffer
 import kotlinx.browser.window
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
-import kotlinx.coroutines.launch
-import org.khronos.webgl.ArrayBuffer
-import org.khronos.webgl.Uint8Array
-import org.khronos.webgl.get
-import org.khronos.webgl.set
 import org.w3c.fetch.RequestInit
 import org.w3c.files.Blob
 import kotlin.js.ExperimentalWasmJsInterop
-import kotlin.math.max
 
+// FIXME: currently its just in-memory file implementation, maybe will need to add real file caching
 actual class File actual constructor(
     private val filepath: String,
-    mode: FileMode, // not used
-) : AutoCloseable {
+    mode: FileMode,
+    access: FileAccess,
+) {
 
     actual val size: Int
-        get() = buffer?.byteLength ?: 0
+        get() = buffer?.limit ?: 0
 
     actual val isOpened: Boolean
         get() = buffer != null
 
-    private var buffer: ArrayBuffer? = null
-    private var view: Uint8Array? = null
-    private val scope = CoroutineScope(Dispatchers.Default)
+    actual val access: FileAccess = access
 
-    init {
-        open()
-    }
+    private var buffer: NativeBuffer? = null
 
-    actual override fun close() {
-        flush()
+    actual var mapped: NativeBuffer? = null
+        private set
+
+    actual suspend fun closeImpl() {
         buffer = null
-        view = null
     }
 
-    actual fun open() {
-        if (isOpened) return
-        scope.launch {
-            val response = window.fetch(filepath, RequestInit()).await()
-            val buffer = response.arrayBuffer().await()
-            this@File.buffer = buffer
-            view = Uint8Array(buffer)
+    actual suspend fun openImpl() {
+        val response = window.fetch(filepath, RequestInit()).await()
+        val buffer = response.arrayBuffer().await() as? js.buffer.ArrayBuffer ?: return
+        this.buffer = NativeBuffer(buffer)
+    }
+
+    actual suspend fun writeImpl(bytes: ByteArray, offset: Int, size: Int): Int {
+        this.buffer?.let { buffer ->
+            buffer.setByteArray(offset, bytes.sliceArray(0..size))
+            return size
         }
+        return 0
     }
 
-    actual fun write(bytes: ByteArray, offset: Int, size: Int): Int {
-        val minSize = max(this.size - offset, 0)
-        val usedSize = if (minSize > size) size else minSize
-        val jsBytes = bytes.toJsArray()
-        view?.let { view ->
-            repeat(usedSize) { i ->
-                view[i + offset] = jsBytes[i]
-            }
-        }
-        return usedSize
+    actual suspend fun writeImpl(buffer: NativeBuffer, offset: Int, size: Int): Int {
+        val dst = this.buffer ?: return 0
+        buffer.copyTo(dst, 0, offset, size)
+        return size
     }
 
-    actual fun read(bytes: ByteArray, offset: Int, size: Int): Int {
-        val minSize = max(this.size - offset, 0)
-        val usedSize = if (minSize > size) size else minSize
-        val jsBytes = bytes.toJsArray()
-        view?.let { view ->
-            repeat(usedSize) { i ->
-                jsBytes[i + offset] = view[i]
-            }
-        }
-        return usedSize
+    actual suspend fun readImpl(bytes: ByteArray, offset: Int, size: Int): Int {
+        val src = this.buffer ?: return 0
+        src.copyToByteArray(bytes, offset, size)
+        return size
     }
 
-    actual fun flush() {
-        view?.let { view ->
-            val blob = Blob()
-            window.fetch(filepath, PostBlob(blob))
-        }
+    actual suspend fun readImpl(buffer: NativeBuffer, offset: Int, size: Int): Int {
+        val src = this.buffer ?: return 0
+        src.copyTo(buffer, offset, 0, size)
+        return size
     }
 
-    actual fun delete() {
+    actual suspend fun flushImpl() {
+        val blob = Blob()
+        window.fetch(filepath, PostBlob(blob))
+    }
+
+    actual suspend fun delete() {
         // FIXME: figure out how to delete file blob from browser
+        val blob = Blob()
+        window.fetch(filepath, DeleteBlob(blob))
+    }
+
+    internal actual suspend fun mapImpl(offset: Int, size: Int): NativeBuffer? {
+        val buffer = buffer ?: return null
+        val slice = buffer.buffer?.slice(offset, size) ?: return null
+        mapped = NativeBuffer(slice)
+        return mapped
+    }
+
+    internal actual suspend fun unmapImpl() {
+        mapped = null
     }
 
 }
 
 fun PostBlob(blob: Blob): RequestInit = RequestInit().apply {
     method = "POST"
+    body = blob
+}
+
+fun DeleteBlob(blob: Blob): RequestInit = RequestInit().apply {
+    method = "DELETE"
     body = blob
 }

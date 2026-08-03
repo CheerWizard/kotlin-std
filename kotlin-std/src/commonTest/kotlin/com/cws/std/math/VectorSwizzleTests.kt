@@ -22,6 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class VectorSwizzleTests {
+
     @Test fun float2_swizzle_xx() {
         val v = Float2(1f, 2f)
         assertEquals(1f, v.xx.x)

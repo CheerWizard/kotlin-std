@@ -21,6 +21,7 @@ import com.cws.std.math.vectors.Float3
 import kotlin.test.Test
 
 class CrossProductTests {
+
     @Test fun cross_perpendicular_to_both_inputs() {
         val a = Float3(1f, 2f, 3f)
         val b = Float3(4f, 5f, 6f)

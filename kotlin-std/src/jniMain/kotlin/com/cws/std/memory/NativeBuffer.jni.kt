@@ -399,17 +399,17 @@ actual class NativeBuffer actual constructor(
         sliced.asDoubleBuffer().get(array)
         return array
     }
-
-    private fun Endian.toByteOrder() =
-        when (this) {
-            Endian.LITTLE -> ByteOrder.LITTLE_ENDIAN
-            Endian.BIG -> ByteOrder.BIG_ENDIAN
-        }
-
-    private fun ByteOrder.toEndian() =
-        when (this) {
-            ByteOrder.LITTLE_ENDIAN -> Endian.LITTLE
-            ByteOrder.BIG_ENDIAN -> Endian.BIG
-            else -> error("Unsupported ByteOrder=$this")
-        }
 }
+
+fun Endian.toByteOrder() =
+    when (this) {
+        Endian.LITTLE -> ByteOrder.LITTLE_ENDIAN
+        Endian.BIG -> ByteOrder.BIG_ENDIAN
+    }
+
+fun ByteOrder.toEndian() =
+    when (this) {
+        ByteOrder.LITTLE_ENDIAN -> Endian.LITTLE
+        ByteOrder.BIG_ENDIAN -> Endian.BIG
+        else -> error("Unsupported ByteOrder=$this")
+    }

@@ -21,6 +21,9 @@ val primitiveTypes = setOf(
     "Int", "Long", "UInt", "ULong",
     "Float", "Double",
 )
+
+val matrices = setOf("Mat2", "Mat3", "Mat4")
+
 val variableLengthTypes = setOf(
     "ByteArray", "UByteArray",
     "ShortArray", "CharArray", "UShortArray",
@@ -34,6 +37,10 @@ val Field.isVariableLength get() = type.isVariableLength
 
 val String.isString get() = this == "String"
 val Field.isString get() = type.isString
+
+val String.isMatrix get() = this in matrices
+
+val Field.isMatrix get() = type.isMatrix
 
 val String.isPrimitive get() = this in primitiveTypes
 val Field.isPrimitive get() = type.isPrimitive
@@ -82,6 +89,9 @@ val typesWithDefaults = mapOf(
     "FloatArray" to "FloatArray(0)",
     "DoubleArray" to "DoubleArray(0)",
     "String" to "\"\"",
+    "Mat2" to "Mat2()",
+    "Mat3" to "Mat3()",
+    "Mat4" to "Mat4()",
     "Array" to "arrayOf()",
     "List" to "emptyList()",
     "ArrayList" to "ArrayList()",

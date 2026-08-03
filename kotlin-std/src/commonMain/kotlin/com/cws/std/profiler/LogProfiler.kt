@@ -38,9 +38,9 @@ class LogProfiler : Profiler {
         expectedDuration: Long,
     ) {
         if (duration > expectedDuration && expectedDuration != 0L) {
-            Print.w(TAG, "Scope=$scope Phase=$phase Function=$functionName() - spent $duration ns, expected $expectedDuration ns")
+            Print.w(TAG) { "Scope=$scope Phase=$phase Function=$functionName() - spent $duration ns, expected $expectedDuration ns" }
         } else {
-            Print.d(TAG, "Scope=$scope Phase=$phase Function=$functionName() - spent $duration ns")
+            Print.d(TAG) { "Scope=$scope Phase=$phase Function=$functionName() - spent $duration ns" }
         }
     }
 }

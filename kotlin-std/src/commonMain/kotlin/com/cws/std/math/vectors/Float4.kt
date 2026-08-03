@@ -72,12 +72,13 @@ data class Float4(
 
     operator fun unaryMinus(): Float4 = Float4(-x, -y, -z, -w)
 
+    // Treats Float4 as a row vector.
     operator fun times(m: Mat4) =
         Float4(
-            x * m.v1.x + y * m.v2.x + z * m.v3.x + w * m.v4.x,
-            x * m.v1.y + y * m.v2.y + z * m.v3.y + w * m.v4.y,
-            x * m.v1.z + y * m.v2.z + z * m.v3.z + w * m.v4.z,
-            x * m.v1.w + y * m.v2.w + z * m.v3.w + w * m.v4.w,
+            x * m.m00 + y * m.m10 + z * m.m20 + w * m.m30,
+            x * m.m01 + y * m.m11 + z * m.m21 + w * m.m31,
+            x * m.m02 + y * m.m12 + z * m.m22 + w * m.m32,
+            x * m.m03 + y * m.m13 + z * m.m23 + w * m.m33,
         )
 
     constructor(v: Float) : this(v, v, v, v)

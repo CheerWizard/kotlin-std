@@ -18,38 +18,25 @@ package com.cws.std.math.matrices
 import com.cws.std.math.operators.inverse
 import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float2
-import com.cws.std.memory.NativeData
+import com.cws.std.memory.MemoryLayout
+import com.cws.std.memory.sizeBytes
 
-@NativeData
+fun Mat2.sizeBytes(layout: MemoryLayout) = 4 * Float.sizeBytes(layout)
+fun Mat2.sizeBytesPacked(layout: MemoryLayout) = 4 * Float.sizeBytes(layout)
+
+
 data class Mat2(
-    var v1: Float2 = Float2(),
-    var v2: Float2 = Float2(),
+    var m00: Float = 1f,
+    var m01: Float = 0f,
+    var m10: Float = 0f,
+    var m11: Float = 1f,
 ) {
-    constructor(
-        m00: Float,
-        m01: Float,
-        m10: Float,
-        m11: Float,
-    ) : this() {
-        v1.x = m00
-        v1.y = m01
-
-        v2.x = m10
-        v2.y = m11
-    }
-
-    operator fun get(i: Int): Float2 =
-        when (i) {
-            0 -> v1
-            1 -> v2
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 1]")
-        }
 
     fun identity(): Mat2 {
-        v1.x = 1f
-        v1.y = 0f
-        v2.x = 0f
-        v2.y = 1f
+        m00 = 1f
+        m01 = 0f
+        m10 = 0f
+        m11 = 1f
         return this
     }
 
@@ -57,46 +44,69 @@ data class Mat2(
 
     fun inverse(): Mat2 = inverse(this, this)
 
-    operator fun minus(v: Float): Mat2 = Mat2(v1 - v, v2 - v)
+    operator fun plus(v: Float) = Mat2(
+        m00 + v, m01 + v,
+        m10 + v, m11 + v
+    )
 
-    operator fun times(v: Float): Mat2 = Mat2(v1 * v, v2 * v)
+    operator fun minus(v: Float) = Mat2(
+        m00 - v, m01 - v,
+        m10 - v, m11 - v
+    )
 
-    operator fun div(v: Float): Mat2 = Mat2(v1 / v, v2 / v)
+    operator fun times(v: Float) = Mat2(
+        m00 * v, m01 * v,
+        m10 * v, m11 * v
+    )
 
-    operator fun plus(m: Mat2): Mat2 = Mat2(v1 + m.v1, v2 + m.v2)
+    operator fun div(v: Float) = Mat2(
+        m00 / v, m01 / v,
+        m10 / v, m11 / v
+    )
 
-    operator fun minus(m: Mat2): Mat2 = Mat2(v1 - m.v1, v2 - m.v2)
+    operator fun plus(m: Mat2) = Mat2(
+        m00 + m.m00, m01 + m.m01,
+        m10 + m.m10, m11 + m.m11
+    )
 
-    operator fun div(m: Mat2): Mat2 = Mat2(v1 / m.v1, v2 / m.v2)
+    operator fun minus(m: Mat2) = Mat2(
+        m00 - m.m00, m01 - m.m01,
+        m10 - m.m10, m11 - m.m11
+    )
+
+    operator fun div(m: Mat2) = Mat2(
+        m00 / m.m00, m01 / m.m01,
+        m10 / m.m10, m11 / m.m11
+    )
 
     operator fun times(m: Mat2): Mat2 {
-        val m1 = this
-        val m2 = m
-        val m3 = Mat2()
-        for (r in 0..1) {
-            for (c in 0..1) {
-                for (i in 0..1) {
-                    m3[r][c] += m1[r][i] * m2[i][c]
-                }
-            }
-        }
-        return m3
-    }
+        val a00 = m00
+        val a01 = m01
+        val a10 = m10
+        val a11 = m11
 
-    operator fun unaryMinus(): Mat2 {
-        val m1 = this
-        val m2 = Mat2()
-        for (r in 0..1) {
-            for (c in 0..1) {
-                m2[r][c] = -m1[r][c]
-            }
-        }
-        return m2
-    }
+        val b00 = m.m00
+        val b01 = m.m01
+        val b10 = m.m10
+        val b11 = m.m11
 
-    operator fun times(v: Float2) =
-        Float2(
-            v1.x * v.x + v1.y * v.y,
-            v2.x * v.x + v2.y * v.y,
+        return Mat2(
+            a00 * b00 + a01 * b10,
+            a00 * b01 + a01 * b11,
+
+            a10 * b00 + a11 * b10,
+            a10 * b01 + a11 * b11
         )
+    }
+
+    operator fun unaryMinus() = Mat2(
+        -m00, -m01,
+        -m10, -m11
+    )
+
+    // Treats Float2 as a column vector.
+    operator fun times(v: Float2) = Float2(
+        m00 * v.x + m01 * v.y,
+        m10 * v.x + m11 * v.y
+    )
 }

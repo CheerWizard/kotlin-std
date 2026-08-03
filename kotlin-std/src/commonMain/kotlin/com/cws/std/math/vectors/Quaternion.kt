@@ -17,14 +17,8 @@ package com.cws.std.math.vectors
 
 import com.cws.std.math.operators.Radians
 import com.cws.std.math.operators.dot
-import com.cws.std.math.operators.radians
-import com.cws.std.memory.MemoryLayout
-import com.cws.std.memory.NativeBuffer
+import com.cws.std.math.operators.normalize
 import com.cws.std.memory.NativeData
-import com.cws.std.memory.STD140_SIZE_BYTES
-import com.cws.std.memory.STD430_SIZE_BYTES
-import com.cws.std.memory.nextFloat
-import com.cws.std.memory.pushFloat
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -35,7 +29,7 @@ data class Quaternion(
     var x: Float = 0f,
     var y: Float = 0f,
     var z: Float = 0f,
-    var w: Float = 0f,
+    var w: Float = 1f,
 ) {
     operator fun get(i: Int): Float =
         when (i) {
@@ -65,9 +59,7 @@ data class Quaternion(
         return sqrt(x * x + y * y + z * z + w * w)
     }
 
-    fun normalize(): Quaternion =
-        com.cws.std.math.operators
-            .normalize(this, this)
+    fun normalize(): Quaternion = normalize(this, this)
 
     operator fun plus(v: Float): Quaternion = Quaternion(x + v, y + v, z + v, w + v)
 
@@ -91,30 +83,31 @@ data class Quaternion(
 
     operator fun div(v: Quaternion): Quaternion = Quaternion(x / v.x, y / v.y, z / v.z, w / v.w)
 
-    operator fun unaryMinus(): Quaternion = Quaternion(-x, -y, -z, w)
+    operator fun unaryMinus(): Quaternion = Quaternion(-x, -y, -z, -w)
 
-    fun fromAngle(
-        nx: Float,
-        ny: Float,
-        nz: Float,
-        r: Radians,
-    ): Quaternion {
-        x = nx * sin(r * 0.5f)
-        y = ny * sin(r * 0.5f)
-        z = nz * sin(r * 0.5f)
-        w = cos(r * 0.5f)
-        return this
-    }
+    fun conjugate(): Quaternion = Quaternion(-x, -y, -z, w)
 
     fun fromAngle(
         n: Float3,
         r: Radians,
-    ): Quaternion = fromAngle(n.x, n.y, n.z, r)
+    ): Quaternion {
+        val n = normalize(n)
 
-    fun rotate(n: Float3): Quaternion {
-        val q = this
-        val r = Quaternion()
-        return q * r.fromAngle(n, 0f.radians) * -q
+        val half = r.value * 0.5f
+        val s = sin(half)
+
+        x = n.x * s
+        y = n.y * s
+        z = n.z * s
+        w = cos(half)
+
+        return this
+    }
+
+    fun rotate(v: Float3): Float3 {
+        val p = Quaternion(v.x, v.y, v.z, 0f)
+        val r = this * p * conjugate()
+        return Float3(r.x, r.y, r.z)
     }
 
     fun slerp(
@@ -124,7 +117,7 @@ data class Quaternion(
         val q1 = this
         val q2 = q
 
-        val dot = dot(q1, q2)
+        val dot = dot(q1, q2).coerceIn(-1f, 1f)
         var theta = acos(dot)
         if (theta < 0.0) {
             theta = -theta
@@ -142,5 +135,15 @@ data class Quaternion(
             coeff1 * q1.z + coeff2 * q2.z,
             coeff1 * q1.w + coeff2 * q2.w,
         ).normalize()
+    }
+
+    fun inverse(): Quaternion {
+        val len2 = x*x + y*y + z*z + w*w
+        return Quaternion(
+            -x / len2,
+            -y / len2,
+            -z / len2,
+            w / len2
+        )
     }
 }

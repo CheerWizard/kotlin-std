@@ -15,99 +15,119 @@
  */
 package com.cws.std.io
 
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
+import com.cws.std.memory.MemoryBoundary
+import com.cws.std.memory.NativeBuffer
+import com.cws.std.memory.toEndian
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.nio.file.OpenOption
+import java.nio.file.StandardOpenOption
+import kotlin.io.path.Path
+
+actual enum class FileMode {
+    CREATE_IF_NOT_EXIST,
+    CLEAR_WHEN_OPEN,
+    OPEN_EXISTING,
+}
+
+actual enum class FileAccess(val mapMode: FileChannel.MapMode) {
+    READ_ONLY(FileChannel.MapMode.READ_ONLY),
+    WRITE_ONLY(FileChannel.MapMode.READ_WRITE),
+    READ_WRITE(FileChannel.MapMode.READ_WRITE),
+}
 
 actual class File actual constructor(
     private val filepath: String,
     private val mode: FileMode,
-) : AutoCloseable {
+    actual val access: FileAccess,
+) {
+
     actual val size: Int
-        get() = file?.length()?.toInt() ?: 0
+        get() = fileChannel?.size()?.toInt() ?: 0
 
     actual val isOpened: Boolean
-        get() = file != null
+        get() = fileChannel?.isOpen != null
 
-    private var file: File? = null
-    private var outputStream: BufferedOutputStream? = null
-    private var inputStream: BufferedInputStream? = null
+    private var fileChannel: FileChannel? = null
 
-    init {
-        open()
-    }
+    actual var mapped: NativeBuffer? = null
+        private set
 
-    actual fun open() {
-        if (isOpened) return
-
-        val file = File(filepath)
-        if (mode != FileMode.OPEN_EXISTING) {
-            file.parentFile?.mkdirs()
-            if (!file.exists()) {
-                file.createNewFile()
+    internal actual suspend fun openImpl() {
+        val openOptions = buildSet<OpenOption> {
+            when (access) {
+                FileAccess.READ_ONLY -> add(StandardOpenOption.READ)
+                FileAccess.WRITE_ONLY -> add(StandardOpenOption.WRITE)
+                FileAccess.READ_WRITE -> {
+                    add(StandardOpenOption.READ)
+                    add(StandardOpenOption.WRITE)
+                }
+            }
+            when (mode) {
+                FileMode.CLEAR_WHEN_OPEN -> add(StandardOpenOption.TRUNCATE_EXISTING)
+                FileMode.OPEN_EXISTING -> add(StandardOpenOption.APPEND)
+                FileMode.CREATE_IF_NOT_EXIST -> add(StandardOpenOption.CREATE)
             }
         }
 
-        this.file = file
+        val fileChannel = FileChannel.open(Path(filepath), openOptions)
+        this.fileChannel = fileChannel
     }
 
-    actual fun write(
+    actual suspend fun writeImpl(
         bytes: ByteArray,
         offset: Int,
         size: Int,
     ): Int {
-        if (!isOpened) return 0
-
-        inputStream?.let {
-            it.close()
-            inputStream = null
-        }
-
-        if (outputStream == null) {
-            outputStream = file?.outputStream()?.buffered()
-        }
-
-        outputStream?.write(bytes, offset, size)
-        return size
+        return fileChannel?.write(ByteBuffer.wrap(bytes, offset, size)) ?: size
     }
 
-    actual fun read(
+    actual suspend fun writeImpl(
+        buffer: NativeBuffer,
+        offset: Int,
+        size: Int,
+    ): Int {
+        val buffer = buffer.buffer ?: return 0
+        return fileChannel?.write(buffer) ?: size
+    }
+
+    actual suspend fun readImpl(
         bytes: ByteArray,
         offset: Int,
         size: Int,
     ): Int {
-        if (!isOpened) return 0
-
-        outputStream?.let {
-            it.flush()
-            it.close()
-            outputStream = null
-        }
-
-        if (inputStream == null) {
-            inputStream = file?.inputStream()?.buffered()
-        }
-
-        return inputStream?.read(bytes, offset, size) ?: 0
+        return fileChannel?.read(ByteBuffer.wrap(bytes, offset, size)) ?: size
     }
 
-    actual fun flush() {
-        outputStream?.flush()
+    actual suspend fun readImpl(
+        buffer: NativeBuffer,
+        offset: Int,
+        size: Int,
+    ): Int {
+        val buffer = buffer.buffer ?: return 0
+        return fileChannel?.read(buffer) ?: size
     }
 
-    actual override fun close() {
-        outputStream?.let { stream ->
-            stream.flush()
-            stream.close()
-        }
-        inputStream?.close()
-
-        outputStream = null
-        inputStream = null
-        file = null
+    internal actual suspend fun flushImpl() {
     }
 
-    actual fun delete() {
-        file?.deleteRecursively()
+    internal actual suspend fun closeImpl() {
+        fileChannel?.close()
+        fileChannel = null
     }
+
+    actual suspend fun delete() {
+        java.io.File(filepath).deleteRecursively()
+    }
+
+    internal actual suspend fun mapImpl(offset: Int, size: Int): NativeBuffer? {
+        val buffer = fileChannel?.map(access.mapMode, offset.toLong(), size.toLong()) ?: return null
+        mapped = NativeBuffer(buffer, endian = buffer.order().toEndian(), memoryBoundary = MemoryBoundary.EXTERNAL)
+        return mapped
+    }
+
+    internal actual suspend fun unmapImpl() {
+        mapped = null
+    }
+
 }

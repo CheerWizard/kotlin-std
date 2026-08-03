@@ -65,10 +65,11 @@ data class Float2(
 
     operator fun unaryMinus(): Float2 = Float2(-x, -y)
 
+    // Treats Float2 as a row vector.
     operator fun times(m: Mat2) =
         Float2(
-            x * m.v1.x + y * m.v2.x,
-            x * m.v1.y + y * m.v2.y,
+            x * m.m00 + y * m.m10,
+            x * m.m01 + y * m.m11,
         )
 
     // Swizzle — Float2

@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "io.github.cheerwizard"
-version = "1.0.12"
+version = "1.0.13"
 
 spotless {
     kotlin {
@@ -110,7 +110,7 @@ kotlin {
 
             dependencies {
                 // Logger
-                api("io.github.cheerwizard:print-lib:1.0.5")
+                implementation(libs.print.lib)
                 // Standard
                 api(kotlin("stdlib-common"))
                 api(libs.kotlinx.atomicfu)

@@ -21,10 +21,10 @@ import com.cws.std.math.matrices.Mat4
 
 fun det(m: Mat2): Float =
     det(
-        m[0][0],
-        m[0][1],
-        m[1][0],
-        m[1][1],
+        m.m00,
+        m.m01,
+        m.m10,
+        m.m11,
     )
 
 fun det(
@@ -32,19 +32,20 @@ fun det(
     m01: Float,
     m10: Float,
     m11: Float,
-): Float = m00 * m11 - m10 * m01
+): Float =
+    m00 * m11 - m10 * m01
 
 fun det(m: Mat3): Float =
     det(
-        m[0][0],
-        m[0][1],
-        m[0][2],
-        m[1][0],
-        m[1][1],
-        m[1][2],
-        m[2][0],
-        m[2][1],
-        m[2][2],
+        m.m00,
+        m.m01,
+        m.m02,
+        m.m10,
+        m.m11,
+        m.m12,
+        m.m20,
+        m.m21,
+        m.m22,
     )
 
 fun det(
@@ -57,26 +58,32 @@ fun det(
     m20: Float,
     m21: Float,
     m22: Float,
-): Float = m00 * m11 * m22 + m01 * m12 * m20 + m02 * m10 * m21 - m20 * m11 * m02 - m21 * m12 * m00 - m22 * m10 * m01
+): Float =
+    m00 * m11 * m22 +
+    m01 * m12 * m20 +
+    m02 * m10 * m21 -
+    m02 * m11 * m20 -
+    m01 * m10 * m22 -
+    m00 * m12 * m21
 
 fun det(m: Mat4): Float =
     det(
-        m[0][0],
-        m[0][1],
-        m[0][2],
-        m[0][3],
-        m[1][0],
-        m[1][1],
-        m[1][2],
-        m[1][3],
-        m[2][0],
-        m[2][1],
-        m[2][2],
-        m[2][3],
-        m[3][0],
-        m[3][1],
-        m[3][2],
-        m[3][3],
+        m.m00,
+        m.m01,
+        m.m02,
+        m.m03,
+        m.m10,
+        m.m11,
+        m.m12,
+        m.m13,
+        m.m20,
+        m.m21,
+        m.m22,
+        m.m23,
+        m.m30,
+        m.m31,
+        m.m32,
+        m.m33,
     )
 
 fun det(

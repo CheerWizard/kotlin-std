@@ -23,7 +23,16 @@ fun transpose(
     m: Mat2,
     out: Mat2,
 ): Mat2 {
-    out.swap(0, 1, 1, 0)
+    val m00 = m.m00
+    val m01 = m.m01
+    val m10 = m.m10
+    val m11 = m.m11
+
+    out.m00 = m00
+    out.m01 = m10
+    out.m10 = m01
+    out.m11 = m11
+
     return out
 }
 
@@ -33,9 +42,30 @@ fun transpose(
     m: Mat3,
     out: Mat3,
 ): Mat3 {
-    out.swap(0, 1, 1, 0)
-    out.swap(0, 2, 2, 0)
-    out.swap(1, 2, 2, 1)
+    val m00 = m.m00
+    val m01 = m.m01
+    val m02 = m.m02
+
+    val m10 = m.m10
+    val m11 = m.m11
+    val m12 = m.m12
+
+    val m20 = m.m20
+    val m21 = m.m21
+    val m22 = m.m22
+
+    out.m00 = m00
+    out.m01 = m10
+    out.m02 = m20
+
+    out.m10 = m01
+    out.m11 = m11
+    out.m12 = m21
+
+    out.m20 = m02
+    out.m21 = m12
+    out.m22 = m22
+
     return out
 }
 
@@ -45,14 +75,47 @@ fun transpose(
     m: Mat4,
     out: Mat4,
 ): Mat4 {
-    out.swap(0, 1, 1, 0)
-    out.swap(0, 2, 2, 0)
-    out.swap(0, 3, 3, 0)
 
-    out.swap(1, 2, 2, 1)
-    out.swap(1, 3, 3, 1)
+    val m00 = m.m00
+    val m01 = m.m01
+    val m02 = m.m02
+    val m03 = m.m03
 
-    out.swap(2, 3, 3, 2)
+    val m10 = m.m10
+    val m11 = m.m11
+    val m12 = m.m12
+    val m13 = m.m13
+
+    val m20 = m.m20
+    val m21 = m.m21
+    val m22 = m.m22
+    val m23 = m.m23
+
+    val m30 = m.m30
+    val m31 = m.m31
+    val m32 = m.m32
+    val m33 = m.m33
+
+    out.m00 = m00
+    out.m01 = m10
+    out.m02 = m20
+    out.m03 = m30
+
+    out.m10 = m01
+    out.m11 = m11
+    out.m12 = m21
+    out.m13 = m31
+
+    out.m20 = m02
+    out.m21 = m12
+    out.m22 = m22
+    out.m23 = m32
+
+    out.m30 = m03
+    out.m31 = m13
+    out.m32 = m23
+    out.m33 = m33
+
     return out
 }
 

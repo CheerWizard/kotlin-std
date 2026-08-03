@@ -8,6 +8,7 @@ kotlinxSerializationJson = "1.11.0"
 kotlin = "2.4.10"
 jetbrainsKotlinJvm = "2.4.10"
 kotlinxBrowserVersion = "0.5.0"
+printLib = "1.0.6"
 robolectric = "4.16.1"
 ksp = "2.3.8"
 kotlinpoet = "2.3.0"
@@ -17,6 +18,7 @@ kotlinWebWrapper = "2026.7.7"
 [libraries]
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
+print-lib = { module = "io.github.cheerwizard:print-lib", version.ref = "printLib" }
 test-core = { module = "androidx.test:core", version.ref = "core" }
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }

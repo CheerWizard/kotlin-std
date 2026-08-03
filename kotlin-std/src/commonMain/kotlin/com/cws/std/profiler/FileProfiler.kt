@@ -18,12 +18,14 @@ package com.cws.std.profiler
 import com.cws.print.Print
 import com.cws.print.getCurrentTimeMillis
 import com.cws.std.io.File
+import com.cws.std.io.close
 import com.cws.std.io.write
 import com.cws.std.platform.PlatformInfo
 import com.cws.std.platform.fetchCurrentProcessId
 import com.cws.std.platform.fetchCurrentThreadId
-import kotlinx.atomicfu.locks.ReentrantLock
-import kotlinx.atomicfu.locks.withLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 class FileProfiler(
@@ -34,18 +36,18 @@ class FileProfiler(
     }
 
     private val traceEvents = TraceEvents(mutableListOf())
-    private val lock = ReentrantLock()
     private val file = File(filepath)
+    private val scope = CoroutineScope(SupervisorJob())
 
     private var currentID: Int = 0
 
     override fun close() {
-        lock.withLock {
+        scope.launch {
             try {
                 file.write(Json.encodeToString(traceEvents))
                 traceEvents.events.clear()
             } catch (e: Exception) {
-                Print.e(TAG, "Failed to save JSON trace events into $filepath", e)
+                Print.e(TAG, e) { "Failed to save JSON trace events into $filepath" }
             } finally {
                 file.close()
             }
@@ -63,22 +65,20 @@ class FileProfiler(
         duration: Long,
         expectedDuration: Long,
     ) {
-        lock.withLock {
-            val currentTime = getCurrentTimeMillis()
-            traceEvents.events.add(
-                TraceEvent(
-                    id = currentID++,
-                    category = category,
-                    name = functionName,
-                    durationNanos = duration,
-                    timestamp = currentTime,
-                    scope = scope.value,
-                    phase = phase.value,
-                    color = color.value,
-                    threadId = PlatformInfo.fetchCurrentThreadId(),
-                    processId = PlatformInfo.fetchCurrentProcessId(),
-                ),
-            )
-        }
+        val currentTime = getCurrentTimeMillis()
+        traceEvents.events.add(
+            TraceEvent(
+                id = currentID++,
+                category = category,
+                name = functionName,
+                durationNanos = duration,
+                timestamp = currentTime,
+                scope = scope.value,
+                phase = phase.value,
+                color = color.value,
+                threadId = PlatformInfo.fetchCurrentThreadId(),
+                processId = PlatformInfo.fetchCurrentProcessId(),
+            ),
+        )
     }
 }

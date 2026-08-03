@@ -18,58 +18,44 @@ package com.cws.std.math.matrices
 import com.cws.std.math.operators.inverse
 import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float3
+import com.cws.std.memory.MemoryLayout
 import com.cws.std.memory.NativeData
+import com.cws.std.memory.sizeBytes
 
-@NativeData
+fun Mat3.sizeBytes(layout: MemoryLayout) = 9 * Float.sizeBytes(layout)
+fun Mat3.sizeBytesPacked(layout: MemoryLayout) = 9 * Float.sizeBytes(layout)
+
 data class Mat3(
-    var v1: Float3 = Float3(),
-    var v2: Float3 = Float3(),
-    var v3: Float3 = Float3(),
+    var m00: Float = 1f,
+    var m01: Float = 0f,
+    var m02: Float = 0f,
+
+    var m10: Float = 0f,
+    var m11: Float = 1f,
+    var m12: Float = 0f,
+
+    var m20: Float = 0f,
+    var m21: Float = 0f,
+    var m22: Float = 1f,
 ) {
-    constructor(
-        m00: Float,
-        m01: Float,
-        m02: Float,
-        m10: Float,
-        m11: Float,
-        m12: Float,
-        m20: Float,
-        m21: Float,
-        m22: Float,
-    ) : this() {
-        v1.x = m00
-        v1.y = m01
-        v1.z = m02
-
-        v2.x = m10
-        v2.y = m11
-        v2.z = m12
-
-        v3.x = m20
-        v3.y = m21
-        v3.z = m22
-    }
-
-    operator fun get(i: Int): Float3 =
-        when (i) {
-            0 -> v1
-            1 -> v2
-            2 -> v3
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 2]")
-        }
+    constructor(m: Mat4) : this(
+        m.m00, m.m01, m.m02,
+        m.m10, m.m11, m.m12,
+        m.m20, m.m21, m.m22,
+    )
 
     fun identity(): Mat3 {
-        v1.x = 1f
-        v1.y = 0f
-        v1.z = 0f
+        m00 = 1f
+        m01 = 0f
+        m02 = 0f
 
-        v2.x = 0f
-        v2.y = 1f
-        v2.z = 0f
+        m10 = 0f
+        m11 = 1f
+        m12 = 0f
 
-        v3.x = 0f
-        v3.y = 0f
-        v3.z = 1f
+        m20 = 0f
+        m21 = 0f
+        m22 = 1f
 
         return this
     }
@@ -78,47 +64,98 @@ data class Mat3(
 
     fun inverse(): Mat3 = inverse(this, this)
 
-    operator fun minus(v: Float): Mat3 = Mat3(v1 - v, v2 - v, v3 - v)
+    operator fun plus(v: Float) = Mat3(
+        m00 + v, m01 + v, m02 + v,
+        m10 + v, m11 + v, m12 + v,
+        m20 + v, m21 + v, m22 + v,
+    )
 
-    operator fun times(v: Float): Mat3 = Mat3(v1 * v, v2 * v, v3 * v)
+    operator fun minus(v: Float) = Mat3(
+        m00 - v, m01 - v, m02 - v,
+        m10 - v, m11 - v, m12 - v,
+        m20 - v, m21 - v, m22 - v,
+    )
 
-    operator fun div(v: Float): Mat3 = Mat3(v1 / v, v2 / v, v3 / v)
+    operator fun times(v: Float) = Mat3(
+        m00 * v, m01 * v, m02 * v,
+        m10 * v, m11 * v, m12 * v,
+        m20 * v, m21 * v, m22 * v,
+    )
 
-    operator fun plus(m: Mat3): Mat3 = Mat3(v1 + m.v1, v2 + m.v2, v3 + m.v3)
+    operator fun div(v: Float) = Mat3(
+        m00 / v, m01 / v, m02 / v,
+        m10 / v, m11 / v, m12 / v,
+        m20 / v, m21 / v, m22 / v,
+    )
 
-    operator fun minus(m: Mat3): Mat3 = Mat3(v1 - m.v1, v2 - m.v2, v3 - m.v3)
+    operator fun plus(m: Mat3) = Mat3(
+        m00 + m.m00, m01 + m.m01, m02 + m.m02,
+        m10 + m.m10, m11 + m.m11, m12 + m.m12,
+        m20 + m.m20, m21 + m.m21, m22 + m.m22,
+    )
 
-    operator fun div(m: Mat3): Mat3 = Mat3(v1 / m.v1, v2 / m.v2, v3 / m.v3)
+    operator fun minus(m: Mat3) = Mat3(
+        m00 - m.m00, m01 - m.m01, m02 - m.m02,
+        m10 - m.m10, m11 - m.m11, m12 - m.m12,
+        m20 - m.m20, m21 - m.m21, m22 - m.m22,
+    )
+
+    operator fun div(m: Mat3) = Mat3(
+        m00 / m.m00, m01 / m.m01, m02 / m.m02,
+        m10 / m.m10, m11 / m.m11, m12 / m.m12,
+        m20 / m.m20, m21 / m.m21, m22 / m.m22,
+    )
 
     operator fun times(m: Mat3): Mat3 {
-        val m1 = this
-        val m2 = m
-        val m3 = Mat3()
-        for (r in 0..2) {
-            for (c in 0..2) {
-                for (i in 0..2) {
-                    m3[r][c] += m1[r][i] * m2[i][c]
-                }
-            }
-        }
-        return m3
-    }
+        val a00 = m00
+        val a01 = m01
+        val a02 = m02
 
-    operator fun unaryMinus(): Mat3 {
-        val m1 = this
-        val m2 = Mat3()
-        for (r in 0..2) {
-            for (c in 0..2) {
-                m2[r][c] = -m1[r][c]
-            }
-        }
-        return m2
-    }
+        val a10 = m10
+        val a11 = m11
+        val a12 = m12
 
-    operator fun times(v: Float3) =
-        Float3(
-            v1.x * v.x + v1.y * v.y + v1.z * v.z,
-            v2.x * v.x + v2.y * v.y + v2.z * v.z,
-            v3.x * v.x + v3.y * v.y + v3.z * v.z,
+        val a20 = m20
+        val a21 = m21
+        val a22 = m22
+
+        val b00 = m.m00
+        val b01 = m.m01
+        val b02 = m.m02
+
+        val b10 = m.m10
+        val b11 = m.m11
+        val b12 = m.m12
+
+        val b20 = m.m20
+        val b21 = m.m21
+        val b22 = m.m22
+
+        return Mat3(
+            a00 * b00 + a01 * b10 + a02 * b20,
+            a00 * b01 + a01 * b11 + a02 * b21,
+            a00 * b02 + a01 * b12 + a02 * b22,
+
+            a10 * b00 + a11 * b10 + a12 * b20,
+            a10 * b01 + a11 * b11 + a12 * b21,
+            a10 * b02 + a11 * b12 + a12 * b22,
+
+            a20 * b00 + a21 * b10 + a22 * b20,
+            a20 * b01 + a21 * b11 + a22 * b21,
+            a20 * b02 + a21 * b12 + a22 * b22,
         )
+    }
+
+    operator fun unaryMinus() = Mat3(
+        -m00, -m01, -m02,
+        -m10, -m11, -m12,
+        -m20, -m21, -m22,
+    )
+
+    // Treats Float3 as a column vector.
+    operator fun times(v: Float3) = Float3(
+        m00 * v.x + m01 * v.y + m02 * v.z,
+        m10 * v.x + m11 * v.y + m12 * v.z,
+        m20 * v.x + m21 * v.y + m22 * v.z,
+    )
 }

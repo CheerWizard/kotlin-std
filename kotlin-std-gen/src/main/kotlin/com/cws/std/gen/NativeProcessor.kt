@@ -24,6 +24,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -37,7 +38,10 @@ class NativeProcessor(
     environment: SymbolProcessorEnvironment
 ) : SymbolProcessor {
 
-    private val TAG = NativeProcessor::class.simpleName.orEmpty()
+    companion object {
+        private const val TAG = "NativeProcessor"
+        private const val FUNCTION_SUFFIX_GPU = "Gpu"
+    }
 
     private val generator: CodeGenerator = environment.codeGenerator
     private val logger: KSPLogger = environment.logger
@@ -82,12 +86,20 @@ class NativeProcessor(
 
         fileSpec.addFunction(buildSizeBytesFunction(fileSpec, className, fields))
         fileSpec.addFunction(buildSizeBytesPackedFunction(fileSpec, className, fields))
-        fileSpec.addFunction(buildEncodeToNewBuffer(fileSpec, className, fields))
+
+        fileSpec.addFunction(buildEncodeToNewBuffer(fileSpec, className, fields, ""))
+        fileSpec.addFunction(buildEncodeToNewBuffer(fileSpec, className, fields, FUNCTION_SUFFIX_GPU))
+
         fileSpec.addFunction(buildEncodePackedToNewBuffer(fileSpec, className, fields))
-        fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields))
+
+        fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields, ""))
+        fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields, FUNCTION_SUFFIX_GPU))
+
         fileSpec.addFunction(buildEncodePackedToBuffer(fileSpec, className, fields))
+
         fileSpec.addFunction(buildDecodeFromByteArray(className))
-        fileSpec.addFunction(buildDecodeFromBuffer(fileSpec, className, fields))
+        fileSpec.addFunction(buildDecodeFromBuffer(fileSpec, className, fields, ""))
+        fileSpec.addFunction(buildDecodeFromBuffer(fileSpec, className, fields, FUNCTION_SUFFIX_GPU))
 
         // generate ID constant
         if (declaration.nativeMessage()) {
@@ -138,10 +150,12 @@ class NativeProcessor(
                 val fields = listOf(field)
                 fileSpec.addFunction(buildSizeBytesFunction(fileSpec, className, fields))
                 fileSpec.addFunction(buildSizeBytesPackedFunction(fileSpec, className, fields))
-                fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields))
+                fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields, ""))
+                fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields, FUNCTION_SUFFIX_GPU))
                 fileSpec.addFunction(buildEncodePackedToBuffer(fileSpec, className, fields))
                 fileSpec.addFunction(buildDecodeFromByteArray(className))
-                fileSpec.addFunction(buildEnumDecodeFromBuffer(className, field))
+                fileSpec.addFunction(buildEnumDecodeFromBuffer(className, field, ""))
+                fileSpec.addFunction(buildEnumDecodeFromBuffer(className, field, FUNCTION_SUFFIX_GPU))
                 fileSpec.addProperty(buildEnumValueProperty(className, field, useRawValue = true))
             }
             ordinalProp != null -> {
@@ -151,10 +165,12 @@ class NativeProcessor(
                 val fields = listOf(field)
                 fileSpec.addFunction(buildSizeBytesFunction(fileSpec, className, fields))
                 fileSpec.addFunction(buildSizeBytesPackedFunction(fileSpec, className, fields))
-                fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields))
+                fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields, ""))
+                fileSpec.addFunction(buildEncodeToBuffer(fileSpec, className, fields, FUNCTION_SUFFIX_GPU))
                 fileSpec.addFunction(buildEncodePackedToBuffer(fileSpec, className, fields))
                 fileSpec.addFunction(buildDecodeFromByteArray(className))
-                fileSpec.addFunction(buildEnumOrdinalDecodeFromBuffer(className))
+                fileSpec.addFunction(buildEnumOrdinalDecodeFromBuffer(className, ""))
+                fileSpec.addFunction(buildEnumOrdinalDecodeFromBuffer(className, FUNCTION_SUFFIX_GPU))
                 fileSpec.addProperty(buildEnumValueProperty(className, field, useRawValue = false))
             }
             else -> {
@@ -279,9 +295,10 @@ class NativeProcessor(
     private fun buildEncodeToNewBuffer(
         fileSpec: FileSpec.Builder,
         className: ClassName,
-        fields: List<Field>
+        fields: List<Field>,
+        functionSuffix: String,
     ): FunSpec {
-        return FunSpec.builder("encode")
+        return FunSpec.builder("encode$functionSuffix")
             .addParameter(ParameterSpec("memoryLayout", memoryLayoutClass)
                 .toBuilder()
                 .defaultValue("MemoryLayout.KOTLIN")
@@ -299,7 +316,7 @@ class NativeProcessor(
             .returns(nativeBufferClass)
             .addStatement("if (this == null) return NativeBuffer(0)")
             .addStatement("val buffer = %T(capacity = sizeBytes(memoryLayout), memoryLayout = memoryLayout, endian = endian, memoryBoundary = memoryBoundary)", nativeBufferClass)
-            .addStatement("encode(buffer)")
+            .addStatement("encode$functionSuffix(buffer)")
             .addStatement("return buffer")
             .build()
     }
@@ -476,8 +493,9 @@ class NativeProcessor(
         fileSpec: FileSpec.Builder,
         className: ClassName,
         fields: List<Field>,
+        functionSuffix: String,
     ): FunSpec {
-        return FunSpec.builder("encode")
+        return FunSpec.builder("encode$functionSuffix")
             .receiver(className.copy(nullable = true))
             .addParameter("buffer", nativeBufferClass)
             .addStatement("if (this == null) return")
@@ -485,6 +503,15 @@ class NativeProcessor(
                 fields.forEach { field ->
                     when {
                         field.isPrimitive -> addStatement("buffer.push${field.type}(${field.name})")
+
+                        field.isMatrix -> {
+                            val majorSuffix = if (functionSuffix == FUNCTION_SUFFIX_GPU) {
+                                "ColumnMajor"
+                            } else {
+                                "RowMajor"
+                            }
+                            addStatement("buffer.push${field.type}$majorSuffix(${field.name})")
+                        }
 
                         field.isVariableLength -> {
                             val fieldType = if (field.isString) {
@@ -508,21 +535,21 @@ class NativeProcessor(
                                 field.type.isArray -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("Array field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
                                 }
 
                                 field.type.isList -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("List field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
                                 }
 
                                 field.type.isSet -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("Set field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
                                 }
 
@@ -531,8 +558,8 @@ class NativeProcessor(
                                         ?: error("Map field '${field.name}' has no key type")
                                     val valueType = parameterized.typeArguments.getOrNull(1)
                                         ?: error("Map field '${field.name}' has no value type")
-                                    val encodeKey = encodeExprFor(keyType, "buffer", fileSpec)
-                                    val encodeValue = encodeExprFor(valueType, "buffer", fileSpec)
+                                    val encodeKey = encodeExprFor(keyType, "buffer", fileSpec, functionSuffix)
+                                    val encodeValue = encodeExprFor(valueType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushMap(${field.name}, { $encodeKey }, { $encodeValue })")
                                 }
                             }
@@ -540,8 +567,8 @@ class NativeProcessor(
 
                         field.isNested -> {
                             val fieldClassName = field.typeName as ClassName
-                            fileSpec.addImport(fieldClassName.packageName, "encode")
-                            addStatement("${field.name}.encode(buffer)")
+                            fileSpec.addImport(fieldClassName.packageName, "encode$functionSuffix")
+                            addStatement("${field.name}.encode$functionSuffix(buffer)")
                         }
                     }
                 }
@@ -554,6 +581,7 @@ class NativeProcessor(
         className: ClassName,
         fields: List<Field>,
     ): FunSpec {
+        val functionSuffix = FUNCTION_SUFFIX_GPU // For now "packed encoding" encodes matrices as column-major
         return FunSpec.builder("encodePacked")
             .receiver(className.copy(nullable = true))
             .addParameter("buffer", nativeBufferClass)
@@ -562,6 +590,15 @@ class NativeProcessor(
                 fields.forEach { field ->
                     when {
                         field.isPrimitive -> addStatement("buffer.push${field.type}(${field.name})")
+
+                        field.isMatrix -> {
+                            val majorSuffix = if (functionSuffix == FUNCTION_SUFFIX_GPU) {
+                                "ColumnMajor"
+                            } else {
+                                "RowMajor"
+                            }
+                            addStatement("buffer.push${field.type}$majorSuffix(${field.name})")
+                        }
 
                         field.isVariableLength -> {
                             val fieldType = if (field.isString) {
@@ -580,21 +617,21 @@ class NativeProcessor(
                                 field.type.isArray -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("Array field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
                                 }
 
                                 field.type.isList -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("List field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
                                 }
 
                                 field.type.isSet -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("Set field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec)
+                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
                                 }
 
@@ -603,8 +640,8 @@ class NativeProcessor(
                                         ?: error("Map field '${field.name}' has no key type")
                                     val valueType = parameterized.typeArguments.getOrNull(1)
                                         ?: error("Map field '${field.name}' has no value type")
-                                    val encodeKey = encodeExprFor(keyType, "buffer", fileSpec)
-                                    val encodeValue = encodeExprFor(valueType, "buffer", fileSpec)
+                                    val encodeKey = encodeExprFor(keyType, "buffer", fileSpec, functionSuffix)
+                                    val encodeValue = encodeExprFor(valueType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushPackedMap(${field.name}, { $encodeKey }, { $encodeValue })")
                                 }
                             }
@@ -633,8 +670,9 @@ class NativeProcessor(
         fileSpec: FileSpec.Builder,
         className: ClassName,
         fields: List<Field>,
+        functionSuffix: String,
     ): FunSpec {
-        return FunSpec.builder("decode${className.simpleName}")
+        return FunSpec.builder("decode$functionSuffix${className.simpleName}")
             .receiver(nativeBufferClass)
             .returns(className)
             .apply {
@@ -642,6 +680,15 @@ class NativeProcessor(
                 fields.forEach { field ->
                     when {
                         field.isPrimitive -> addStatement("  next${field.type}(),")
+
+                        field.isMatrix -> {
+                            val majorSuffix = if (functionSuffix == FUNCTION_SUFFIX_GPU) {
+                                "ColumnMajor"
+                            } else {
+                                "RowMajor"
+                            }
+                            addStatement("  next${field.type}$majorSuffix(),")
+                        }
 
                         field.isVariableLength -> {
                             val fieldType = if (field.isString) {
@@ -665,21 +712,21 @@ class NativeProcessor(
                                 field.type.isArray -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("Array field '${field.name}' has no type argument")
-                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec)
+                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec, functionSuffix)
                                     addStatement("  nextArray { $decodeElement },")
                                 }
 
                                 field.type.isList -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("List field '${field.name}' has no type argument")
-                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec)
+                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec, functionSuffix)
                                     addStatement("  nextList { $decodeElement },")
                                 }
 
                                 field.type.isSet -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
                                         ?: error("Set field '${field.name}' has no type argument")
-                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec)
+                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec, functionSuffix)
                                     addStatement("  nextSet { $decodeElement },")
                                 }
 
@@ -688,8 +735,8 @@ class NativeProcessor(
                                         ?: error("Map field '${field.name}' has no key type")
                                     val valueType = parameterized.typeArguments.getOrNull(1)
                                         ?: error("Map field '${field.name}' has no value type")
-                                    val decodeKey = decodeExprFor(keyType, "this", fileSpec)
-                                    val decodeValue = decodeExprFor(valueType, "this", fileSpec)
+                                    val decodeKey = decodeExprFor(keyType, "this", fileSpec, functionSuffix)
+                                    val decodeValue = decodeExprFor(valueType, "this", fileSpec, functionSuffix)
                                     addStatement("  nextMap({ $decodeKey }, { $decodeValue }),")
                                 }
                             }
@@ -697,8 +744,8 @@ class NativeProcessor(
 
                         field.isNested -> {
                             val fieldClassName = field.typeName as ClassName
-                            fileSpec.addImport(fieldClassName.packageName, "decode${field.type}")
-                            addStatement("  decode${field.type}(),")
+                            fileSpec.addImport(fieldClassName.packageName, "decode$functionSuffix${field.type}")
+                            addStatement("  decode$functionSuffix${field.type}(),")
                         }
                     }
                 }
@@ -707,8 +754,8 @@ class NativeProcessor(
             .build()
     }
 
-    private fun buildEnumDecodeFromBuffer(className: ClassName, rawField: Field): FunSpec {
-        return FunSpec.builder("decode${className.simpleName}")
+    private fun buildEnumDecodeFromBuffer(className: ClassName, rawField: Field, functionSuffix: String): FunSpec {
+        return FunSpec.builder("decode$functionSuffix${className.simpleName}")
             .receiver(nativeBufferClass)
             .returns(className)
             .addStatement("val rawValue = next${rawField.type}()")
@@ -720,15 +767,15 @@ class NativeProcessor(
             .build()
     }
 
-    private fun buildEnumOrdinalDecodeFromBuffer(className: ClassName): FunSpec {
-        return FunSpec.builder("decode${className.simpleName}")
+    private fun buildEnumOrdinalDecodeFromBuffer(className: ClassName, functionSuffix: String): FunSpec {
+        return FunSpec.builder("decode$functionSuffix${className.simpleName}")
             .receiver(nativeBufferClass)
             .returns(className)
             .addStatement("val ordinal = nextInt()")
             .addStatement(
                 "return %T.entries.getOrNull(ordinal) ?: error(%S)",
                 className,
-                "Can't find ordinal \$ordinal inside of ${className.simpleName}",
+                "Can't find ordinal inside of ${className.simpleName}",
             )
             .build()
     }
@@ -753,6 +800,7 @@ class NativeProcessor(
         typeName: TypeName,
         bufferExpr: String,
         fileSpec: FileSpec.Builder,
+        functionSuffix: String,
     ): String {
         // strip nullability before switching
         val nonNull = when (typeName) {
@@ -765,7 +813,17 @@ class NativeProcessor(
             is ClassName -> {
                 var simple = nonNull.simpleName
                 when {
-                    simple in primitiveTypes -> "$bufferExpr.push$simple(it)"
+                    simple.isPrimitive -> "$bufferExpr.push$simple(it)"
+
+                    simple.isMatrix -> {
+                        val majorSuffix = if (functionSuffix == FUNCTION_SUFFIX_GPU) {
+                            "ColumnMajor"
+                        } else {
+                            "RowMajor"
+                        }
+                        "$bufferExpr.push$simple$majorSuffix(it)"
+                    }
+
                     simple.isVariableLength -> {
                         if (nonNull.simpleName.isString) {
                             simple = if (typeName.nativeStringUtf16()) "StringUtf16" else "StringUtf8"
@@ -778,9 +836,10 @@ class NativeProcessor(
                             "$bufferExpr.pushFixed$simple(it, $fixedSize)"
                         }
                     }
+
                     else -> {
-                        fileSpec.addImport(nonNull.packageName, "encode")
-                        "it.encode($bufferExpr)"
+                        fileSpec.addImport(nonNull.packageName, "encode$functionSuffix")
+                        "it.encode$functionSuffix($bufferExpr)"
                     }
                 }
             }
@@ -789,17 +848,18 @@ class NativeProcessor(
                 when {
                     nonNull.rawType.simpleName.isList || nonNull.rawType.simpleName.isSet -> {
                         val elementType = nonNull.typeArguments.first()
-                        val innerEncode = encodeExprFor(elementType, bufferExpr, fileSpec)
+                        val innerEncode = encodeExprFor(elementType, bufferExpr, fileSpec, functionSuffix)
                         "$bufferExpr.pushCollection(it) { $innerEncode }"
                     }
                     nonNull.rawType.simpleName.isMap -> {
-                        val encodeKey = encodeExprFor(nonNull.typeArguments[0], bufferExpr, fileSpec)
-                        val encodeValue = encodeExprFor(nonNull.typeArguments[1], bufferExpr, fileSpec)
+                        val encodeKey = encodeExprFor(nonNull.typeArguments[0], bufferExpr, fileSpec, functionSuffix)
+                        val encodeValue = encodeExprFor(nonNull.typeArguments[1], bufferExpr, fileSpec, functionSuffix)
                         "$bufferExpr.pushMap(it, { $encodeKey }, { $encodeValue })"
                     }
                     else -> error("Unsupported parameterized type: ${nonNull.rawType.simpleName}")
                 }
             }
+
             else -> error("Unsupported type: $typeName")
         }
     }
@@ -808,6 +868,7 @@ class NativeProcessor(
         typeName: TypeName,
         bufferExpr: String,
         fileSpec: FileSpec.Builder,
+        functionSuffix: String,
     ): String {
         val nonNull = when (typeName) {
             is ParameterizedTypeName -> typeName.copy(nullable = false)
@@ -820,6 +881,14 @@ class NativeProcessor(
                 var simple = nonNull.simpleName
                 when {
                     simple.isPrimitive -> "$bufferExpr.next$simple()"
+                    simple.isMatrix -> {
+                        val majorSuffix = if (functionSuffix == FUNCTION_SUFFIX_GPU) {
+                            "ColumnMajor"
+                        } else {
+                            "RowMajor"
+                        }
+                        "$bufferExpr.next$simple$majorSuffix()"
+                    }
                     simple.isVariableLength -> {
                         if (nonNull.simpleName.isString) {
                             simple = if (typeName.nativeStringUtf16()) "StringUtf16" else "StringUtf8"
@@ -833,8 +902,8 @@ class NativeProcessor(
                         }
                     }
                     else -> {
-                        fileSpec.addImport(nonNull.packageName, "decode$simple")
-                        "$bufferExpr.decode$simple()"
+                        fileSpec.addImport(nonNull.packageName, "decode$functionSuffix$simple")
+                        "$bufferExpr.decode$functionSuffix$simple()"
                     }
                 }
             }
@@ -842,25 +911,26 @@ class NativeProcessor(
             is ParameterizedTypeName -> {
                 when {
                     nonNull.rawType.simpleName.isArray -> {
-                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec)
+                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec, functionSuffix)
                         "$bufferExpr.nextArray { $innerDecode }"
                     }
                     nonNull.rawType.simpleName.isList -> {
-                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec)
+                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec, functionSuffix)
                         "$bufferExpr.nextList { $innerDecode }"
                     }
                     nonNull.rawType.simpleName.isSet -> {
-                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec)
+                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec, functionSuffix)
                         "$bufferExpr.nextSet { $innerDecode }"
                     }
                     nonNull.rawType.simpleName.isMap -> {
-                        val decodeKey = decodeExprFor(nonNull.typeArguments[0], bufferExpr, fileSpec)
-                        val decodeValue = decodeExprFor(nonNull.typeArguments[1], bufferExpr, fileSpec)
+                        val decodeKey = decodeExprFor(nonNull.typeArguments[0], bufferExpr, fileSpec, functionSuffix)
+                        val decodeValue = decodeExprFor(nonNull.typeArguments[1], bufferExpr, fileSpec, functionSuffix)
                         "$bufferExpr.nextMap({ $decodeKey }, { $decodeValue })"
                     }
                     else -> error("Unsupported parameterized type: ${nonNull.rawType.simpleName}")
                 }
             }
+
             else -> error("Unsupported type: $typeName")
         }
     }

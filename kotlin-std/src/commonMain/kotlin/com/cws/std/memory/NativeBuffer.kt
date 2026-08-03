@@ -15,6 +15,10 @@
  */
 package com.cws.std.memory
 
+import com.cws.std.math.matrices.Mat2
+import com.cws.std.math.matrices.Mat3
+import com.cws.std.math.matrices.Mat4
+
 enum class Endian {
     LITTLE,
     BIG,
@@ -184,6 +188,8 @@ fun NativeBuffer.flip(): NativeBuffer {
     position = 0
     return this
 }
+
+fun NativeBuffer.isEmpty() = limit <= 0
 
 fun NativeBuffer.clone(): NativeBuffer = NativeBuffer(limit, memoryLayout, endian, memoryBoundary)
 
@@ -462,6 +468,94 @@ fun NativeBuffer.nextStringUtf8(size: Int): String = nextByteArray(size).decodeT
 fun NativeBuffer.nextStringUtf16(): String = nextCharArray().concatToString()
 
 fun NativeBuffer.nextStringUtf16(size: Int): String = nextCharArray(size).concatToString().trimEnd('\u0000')
+
+fun NativeBuffer.nextMat2RowMajor(): Mat2 = Mat2(
+    m00 = nextFloat(),
+    m01 = nextFloat(),
+
+    m10 = nextFloat(),
+    m11 = nextFloat(),
+)
+
+fun NativeBuffer.nextMat2ColumnMajor(): Mat2 = Mat2(
+    m00 = nextFloat(),
+    m10 = nextFloat(),
+
+    m01 = nextFloat(),
+    m11 = nextFloat(),
+)
+
+fun NativeBuffer.nextMat3RowMajor(): Mat3 = Mat3(
+    m00 = nextFloat(),
+    m01 = nextFloat(),
+    m02 = nextFloat(),
+
+    m10 = nextFloat(),
+    m11 = nextFloat(),
+    m12 = nextFloat(),
+
+    m20 = nextFloat(),
+    m21 = nextFloat(),
+    m22 = nextFloat(),
+)
+
+fun NativeBuffer.nextMat3ColumnMajor(): Mat3 = Mat3(
+    m00 = nextFloat(),
+    m10 = nextFloat(),
+    m20 = nextFloat(),
+
+    m01 = nextFloat(),
+    m11 = nextFloat(),
+    m21 = nextFloat(),
+
+    m02 = nextFloat(),
+    m12 = nextFloat(),
+    m22 = nextFloat(),
+)
+
+fun NativeBuffer.nextMat4RowMajor(): Mat4 = Mat4(
+    m00 = nextFloat(),
+    m01 = nextFloat(),
+    m02 = nextFloat(),
+    m03 = nextFloat(),
+
+    m10 = nextFloat(),
+    m11 = nextFloat(),
+    m12 = nextFloat(),
+    m13 = nextFloat(),
+
+    m20 = nextFloat(),
+    m21 = nextFloat(),
+    m22 = nextFloat(),
+    m23 = nextFloat(),
+
+    m30 = nextFloat(),
+    m31 = nextFloat(),
+    m32 = nextFloat(),
+    m33 = nextFloat(),
+)
+
+fun NativeBuffer.nextMat4ColumnMajor(): Mat4 = Mat4(
+    m00 = nextFloat(),
+    m10 = nextFloat(),
+    m20 = nextFloat(),
+    m30 = nextFloat(),
+
+    m01 = nextFloat(),
+    m11 = nextFloat(),
+    m21 = nextFloat(),
+    m31 = nextFloat(),
+
+    m02 = nextFloat(),
+    m12 = nextFloat(),
+    m22 = nextFloat(),
+    m32 = nextFloat(),
+
+    m03 = nextFloat(),
+    m13 = nextFloat(),
+    m23 = nextFloat(),
+    m33 = nextFloat(),
+)
 
 inline fun <reified T> NativeBuffer.nextArray(decode: () -> T): Array<T> {
     val size = nextInt()
@@ -955,6 +1049,94 @@ fun NativeBuffer.pushFixedStringUtf16(
             .padEnd(size, '\u0000')
             .toCharArray()
     pushFixedCharArray(chars, size)
+}
+
+fun NativeBuffer.pushMat2RowMajor(value: Mat2) {
+    pushFloat(value.m00)
+    pushFloat(value.m01)
+
+    pushFloat(value.m10)
+    pushFloat(value.m11)
+}
+
+fun NativeBuffer.pushMat2ColumnMajor(value: Mat2) {
+    pushFloat(value.m00)
+    pushFloat(value.m10)
+
+    pushFloat(value.m01)
+    pushFloat(value.m11)
+}
+
+fun NativeBuffer.pushMat3RowMajor(value: Mat3) {
+    pushFloat(value.m00)
+    pushFloat(value.m01)
+    pushFloat(value.m02)
+
+    pushFloat(value.m10)
+    pushFloat(value.m11)
+    pushFloat(value.m12)
+
+    pushFloat(value.m20)
+    pushFloat(value.m21)
+    pushFloat(value.m22)
+}
+
+fun NativeBuffer.pushMat3ColumnMajor(value: Mat3) {
+    pushFloat(value.m00)
+    pushFloat(value.m10)
+    pushFloat(value.m20)
+
+    pushFloat(value.m01)
+    pushFloat(value.m11)
+    pushFloat(value.m21)
+
+    pushFloat(value.m02)
+    pushFloat(value.m12)
+    pushFloat(value.m22)
+}
+
+fun NativeBuffer.pushMat4RowMajor(value: Mat4) {
+    pushFloat(value.m00)
+    pushFloat(value.m01)
+    pushFloat(value.m02)
+    pushFloat(value.m03)
+
+    pushFloat(value.m10)
+    pushFloat(value.m11)
+    pushFloat(value.m12)
+    pushFloat(value.m13)
+
+    pushFloat(value.m20)
+    pushFloat(value.m21)
+    pushFloat(value.m22)
+    pushFloat(value.m23)
+
+    pushFloat(value.m30)
+    pushFloat(value.m31)
+    pushFloat(value.m32)
+    pushFloat(value.m33)
+}
+
+fun NativeBuffer.pushMat4ColumnMajor(value: Mat4) {
+    pushFloat(value.m00)
+    pushFloat(value.m10)
+    pushFloat(value.m20)
+    pushFloat(value.m30)
+
+    pushFloat(value.m01)
+    pushFloat(value.m11)
+    pushFloat(value.m21)
+    pushFloat(value.m31)
+
+    pushFloat(value.m02)
+    pushFloat(value.m12)
+    pushFloat(value.m22)
+    pushFloat(value.m32)
+
+    pushFloat(value.m03)
+    pushFloat(value.m13)
+    pushFloat(value.m23)
+    pushFloat(value.m33)
 }
 
 inline fun <T> NativeBuffer.pushCollection(

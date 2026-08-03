@@ -24,124 +24,91 @@ import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float3
 import com.cws.std.math.vectors.Float4
 import com.cws.std.math.vectors.Quaternion
-import com.cws.std.memory.NativeData
+import com.cws.std.memory.MemoryLayout
+import com.cws.std.memory.sizeBytes
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
 
-@NativeData
+fun Mat4.sizeBytes(layout: MemoryLayout) = 16 * Float.sizeBytes(layout)
+fun Mat4.sizeBytesPacked(layout: MemoryLayout) = 16 * Float.sizeBytes(layout)
+
 data class Mat4(
-    var v1: Float4 = Float4(),
-    var v2: Float4 = Float4(),
-    var v3: Float4 = Float4(),
-    var v4: Float4 = Float4(),
+    var m00: Float = 1f,
+    var m01: Float = 0f,
+    var m02: Float = 0f,
+    var m03: Float = 0f,
+
+    var m10: Float = 0f,
+    var m11: Float = 1f,
+    var m12: Float = 0f,
+    var m13: Float = 0f,
+
+    var m20: Float = 0f,
+    var m21: Float = 0f,
+    var m22: Float = 1f,
+    var m23: Float = 0f,
+
+    var m30: Float = 0f,
+    var m31: Float = 0f,
+    var m32: Float = 0f,
+    var m33: Float = 1f,
 ) {
 
-    constructor(
-        m00: Float,
-        m01: Float,
-        m02: Float,
-        m03: Float,
-        m10: Float,
-        m11: Float,
-        m12: Float,
-        m13: Float,
-        m20: Float,
-        m21: Float,
-        m22: Float,
-        m23: Float,
-        m30: Float,
-        m31: Float,
-        m32: Float,
-        m33: Float,
-    ) : this() {
-        v1.x = m00
-        v1.x = m01
-        v1.x = m02
-        v1.x = m03
-
-        v2.x = m10
-        v2.x = m11
-        v2.x = m12
-        v2.x = m13
-
-        v3.x = m20
-        v3.y = m21
-        v3.z = m22
-        v3.w = m23
-
-        v4.x = m30
-        v4.y = m31
-        v4.z = m32
-        v4.w = m33
-    }
-
-    constructor(
-        q: Quaternion
-    ): this() {
-        val m = this
-
+    constructor(q: Quaternion) : this() {
         val xx = q.x * q.x
-        val xy = q.x * q.y
-        val xz = q.x * q.z
         val yy = q.y * q.y
         val zz = q.z * q.z
+
+        val xy = q.x * q.y
+        val xz = q.x * q.z
         val yz = q.y * q.z
+
         val wx = q.w * q.x
         val wy = q.w * q.y
         val wz = q.w * q.z
 
-        m[0][0] = 1.0f - 2.0f * (yy + zz);
-        m[1][0] = 2.0f * (xy - wz);
-        m[2][0] = 2.0f * (xz + wy);
-        m[3][0] = 0f
+        m00 = 1f - 2f * (yy + zz)
+        m01 = 2f * (xy + wz)
+        m02 = 2f * (xz - wy)
+        m03 = 0f
 
-        m[0][1] = 2.0f * (xy + wz);
-        m[1][1] = 1.0f - 2.0f * (xx + zz);
-        m[2][1] = 2.0f * (yz - wx);
-        m[3][1] = 0f
+        m10 = 2f * (xy - wz)
+        m11 = 1f - 2f * (xx + zz)
+        m12 = 2f * (yz + wx)
+        m13 = 0f
 
-        m[0][2] = 2.0f * (xz - wy);
-        m[1][2] = 2.0f * (yz + wx);
-        m[2][2] = 1.0f - 2.0f * (xx + yy);
-        m[3][2] = 0f
+        m20 = 2f * (xz + wy)
+        m21 = 2f * (yz - wx)
+        m22 = 1f - 2f * (xx + yy)
+        m23 = 0f
 
-        m[0][3] = 0f
-        m[1][3] = 0f
-        m[2][3] = 0f
-        m[3][3] = 1f
-    }
-
-    operator fun get(i: Int): Float4 {
-        return when (i) {
-            0 -> v1
-            1 -> v2
-            2 -> v3
-            3 -> v4
-            else -> throw IndexOutOfBoundsException("i=$i out of range [0, 3]")
-        }
+        m30 = 0f
+        m31 = 0f
+        m32 = 0f
+        m33 = 1f
     }
 
     fun identity(): Mat4 {
-        v1.x = 1f
-        v1.y = 0f
-        v1.z = 0f
-        v1.w = 0f
+        m00 = 1f
+        m01 = 0f
+        m02 = 0f
+        m03 = 0f
 
-        v2.x = 0f
-        v2.y = 1f
-        v2.z = 0f
-        v2.w = 0f
+        m10 = 0f
+        m11 = 1f
+        m12 = 0f
+        m13 = 0f
 
-        v3.x = 0f
-        v3.y = 0f
-        v3.z = 1f
-        v3.w = 0f
+        m20 = 0f
+        m21 = 0f
+        m22 = 1f
+        m23 = 0f
 
-        v4.x = 0f
-        v4.y = 0f
-        v4.z = 0f
-        v4.w = 1f
+        m30 = 0f
+        m31 = 0f
+        m32 = 0f
+        m33 = 1f
 
         return this
     }
@@ -150,136 +117,228 @@ data class Mat4(
 
     fun inverse(): Mat4 = inverse(this, this)
 
-    fun translate(translation: Float3): Mat4 {
-        val m = this
-        m[0][3] = translation.x
-        m[1][3] = translation.y
-        m[2][3] = translation.z
+    fun translate(v: Float3): Mat4 = translate(v.x, v.y, v.z)
+
+    fun translate(
+        x: Float = 0f,
+        y: Float = 0f,
+        z: Float = 0f,
+    ): Mat4 {
+        m03 += x
+        m13 += y
+        m23 += z
         return this
     }
 
-    fun scale(scalar: Float3): Mat4 {
-        val m = this
-        m[0][0] = scalar.x
-        m[1][1] = scalar.y
-        m[2][2] = scalar.z
+    fun scale(v: Float3): Mat4 = scale(v.x, v.y, v.z)
+
+    fun scale(
+        x: Float = 1f,
+        y: Float = 1f,
+        z: Float = 1f,
+    ): Mat4 {
+        m00 *= x
+        m11 *= y
+        m22 *= z
         return this
     }
 
-    fun rotate(rx: Float, ry: Float, rz: Float, axis: Float3): Mat4 {
-        var m = this
-        val mx = Mat4()
-        val my = Mat4()
-        val mz = Mat4()
+    fun rotateX(angle: Float): Mat4 {
+        val s = sin(angle)
+        val c = cos(angle)
 
-        val sinx = sin(rx)
-        val cosx = cos(rx)
-        mx[1][1] = cosx
-        mx[1][2] = -sinx
-        mx[2][1] = sinx
-        mx[2][2] = cosx
-        mx[0][0] = axis.x
+        val y0 = m10
+        val y1 = m11
+        val y2 = m12
+        val y3 = m13
 
-        val siny = sin(ry)
-        val cosy = cos(ry)
-        my[0][0] = cosy
-        my[0][2] = siny
-        my[2][0] = -siny
-        my[2][2] = cosy
-        my[1][1] = axis.y
+        val z0 = m20
+        val z1 = m21
+        val z2 = m22
+        val z3 = m23
 
-        val sinz = sin(rz)
-        val cosz = cos(rz)
-        mz[0][0] = cosz
-        mz[0][1] = -sinz
-        mz[1][0] = sinz
-        mz[1][1] = cosz
-        mz[2][2] = axis.z
+        m10 = c * y0 + s * z0
+        m11 = c * y1 + s * z1
+        m12 = c * y2 + s * z2
+        m13 = c * y3 + s * z3
 
-        m *= mz
-        m *= my
-        m *= mx
+        m20 = c * z0 - s * y0
+        m21 = c * z1 - s * y1
+        m22 = c * z2 - s * y2
+        m23 = c * z3 - s * y3
 
-        return m
+        return this
     }
 
-    fun rotate(quaternion: Quaternion): Mat4 {
-        return this * Mat4(quaternion)
+    fun rotateY(angle: Float): Mat4 {
+        val s = sin(angle)
+        val c = cos(angle)
+
+        val x0 = m00
+        val x1 = m01
+        val x2 = m02
+        val x3 = m03
+
+        val z0 = m20
+        val z1 = m21
+        val z2 = m22
+        val z3 = m23
+
+        // Y-axis rotation matches Ry rotation matrix, which is the opposite to Rx, Rz rotation matrices
+
+        m00 = c * x0 - s * z0
+        m01 = c * x1 - s * z1
+        m02 = c * x2 - s * z2
+        m03 = c * x3 - s * z3
+
+        m20 = c * z0 + s * x0
+        m21 = c * z1 + s * x1
+        m22 = c * z2 + s * x2
+        m23 = c * z3 + s * x3
+
+        return this
     }
 
-    operator fun plus(v: Float): Mat4 {
-        return Mat4(v1 + v, v2 + v, v3 + v, v4 + v)
+    fun rotateZ(angle: Float): Mat4 {
+        val s = sin(angle)
+        val c = cos(angle)
+
+        val x0 = m00
+        val x1 = m01
+        val x2 = m02
+        val x3 = m03
+
+        val y0 = m10
+        val y1 = m11
+        val y2 = m12
+        val y3 = m13
+
+        m00 = c * x0 + s * y0
+        m01 = c * x1 + s * y1
+        m02 = c * x2 + s * y2
+        m03 = c * x3 + s * y3
+
+        m10 = c * y0 - s * x0
+        m11 = c * y1 - s * x1
+        m12 = c * y2 - s * x2
+        m13 = c * y3 - s * x3
+
+        return this
     }
 
-    operator fun minus(v: Float): Mat4 {
-        return Mat4(v1 - v, v2 - v, v3 - v, v4 - v)
-    }
+    fun rotate(quaternion: Quaternion): Mat4 = this * Mat4(quaternion)
 
-    operator fun times(v: Float): Mat4 {
-        return Mat4(v1 * v, v2 * v, v3 * v, v4 * v)
-    }
+    operator fun plus(v: Float) = Mat4(
+        m00 + v, m01 + v, m02 + v, m03 + v,
+        m10 + v, m11 + v, m12 + v, m13 + v,
+        m20 + v, m21 + v, m22 + v, m23 + v,
+        m30 + v, m31 + v, m32 + v, m33 + v,
+    )
 
-    operator fun div(v: Float): Mat4 {
-        return Mat4(v1 / v, v2 / v, v3 / v, v4 / v)
-    }
+    operator fun minus(v: Float) = Mat4(
+        m00 - v, m01 - v, m02 - v, m03 - v,
+        m10 - v, m11 - v, m12 - v, m13 - v,
+        m20 - v, m21 - v, m22 - v, m23 - v,
+        m30 - v, m31 - v, m32 - v, m33 - v,
+    )
 
-    operator fun plus(m: Mat4): Mat4 {
-        return Mat4(v1 + m.v1, v2 + m.v2, v3 + m.v3, v4 + m.v4)
-    }
+    operator fun times(v: Float) = Mat4(
+        m00 * v, m01 * v, m02 * v, m03 * v,
+        m10 * v, m11 * v, m12 * v, m13 * v,
+        m20 * v, m21 * v, m22 * v, m23 * v,
+        m30 * v, m31 * v, m32 * v, m33 * v,
+    )
 
-    operator fun minus(m: Mat4): Mat4 {
-        return Mat4(v1 - m.v1, v2 - m.v2, v3 - m.v3, v4 - m.v4)
-    }
+    operator fun div(v: Float) = Mat4(
+        m00 / v, m01 / v, m02 / v, m03 / v,
+        m10 / v, m11 / v, m12 / v, m13 / v,
+        m20 / v, m21 / v, m22 / v, m23 / v,
+        m30 / v, m31 / v, m32 / v, m33 / v,
+    )
 
-    operator fun div(m: Mat4): Mat4 {
-        return Mat4(v1 / m.v1, v2 / m.v2, v3 / m.v3, v4 / m.v4)
-    }
+    operator fun plus(m: Mat4) = Mat4(
+        m00 + m.m00, m01 + m.m01, m02 + m.m02, m03 + m.m03,
+        m10 + m.m10, m11 + m.m11, m12 + m.m12, m13 + m.m13,
+        m20 + m.m20, m21 + m.m21, m22 + m.m22, m23 + m.m23,
+        m30 + m.m30, m31 + m.m31, m32 + m.m32, m33 + m.m33,
+    )
+
+    operator fun minus(m: Mat4) = Mat4(
+        m00 - m.m00, m01 - m.m01, m02 - m.m02, m03 - m.m03,
+        m10 - m.m10, m11 - m.m11, m12 - m.m12, m13 - m.m13,
+        m20 - m.m20, m21 - m.m21, m22 - m.m22, m23 - m.m23,
+        m30 - m.m30, m31 - m.m31, m32 - m.m32, m33 - m.m33,
+    )
+
+    operator fun div(m: Mat4) = Mat4(
+        m00 / m.m00, m01 / m.m01, m02 / m.m02, m03 / m.m03,
+        m10 / m.m10, m11 / m.m11, m12 / m.m12, m13 / m.m13,
+        m20 / m.m20, m21 / m.m21, m22 / m.m22, m23 / m.m23,
+        m30 / m.m30, m31 / m.m31, m32 / m.m32, m33 / m.m33,
+    )
 
     operator fun times(m: Mat4): Mat4 {
-        val m1 = this
-        val m2 = m
-        val m3 = Mat4()
-        for (r in 0..3) {
-            for (c in 0..3) {
-                for (i in 0..3) {
-                    m3[r][c] += m1[r][i] * m2[i][c]
-                }
-            }
-        }
-        return m3
+        val a00 = m00; val a01 = m01; val a02 = m02; val a03 = m03
+        val a10 = m10; val a11 = m11; val a12 = m12; val a13 = m13
+        val a20 = m20; val a21 = m21; val a22 = m22; val a23 = m23
+        val a30 = m30; val a31 = m31; val a32 = m32; val a33 = m33
+
+        val b00 = m.m00; val b01 = m.m01; val b02 = m.m02; val b03 = m.m03
+        val b10 = m.m10; val b11 = m.m11; val b12 = m.m12; val b13 = m.m13
+        val b20 = m.m20; val b21 = m.m21; val b22 = m.m22; val b23 = m.m23
+        val b30 = m.m30; val b31 = m.m31; val b32 = m.m32; val b33 = m.m33
+
+        return Mat4(
+            a00 * b00 + a01 * b10 + a02 * b20 + a03 * b30,
+            a00 * b01 + a01 * b11 + a02 * b21 + a03 * b31,
+            a00 * b02 + a01 * b12 + a02 * b22 + a03 * b32,
+            a00 * b03 + a01 * b13 + a02 * b23 + a03 * b33,
+
+            a10 * b00 + a11 * b10 + a12 * b20 + a13 * b30,
+            a10 * b01 + a11 * b11 + a12 * b21 + a13 * b31,
+            a10 * b02 + a11 * b12 + a12 * b22 + a13 * b32,
+            a10 * b03 + a11 * b13 + a12 * b23 + a13 * b33,
+
+            a20 * b00 + a21 * b10 + a22 * b20 + a23 * b30,
+            a20 * b01 + a21 * b11 + a22 * b21 + a23 * b31,
+            a20 * b02 + a21 * b12 + a22 * b22 + a23 * b32,
+            a20 * b03 + a21 * b13 + a22 * b23 + a23 * b33,
+
+            a30 * b00 + a31 * b10 + a32 * b20 + a33 * b30,
+            a30 * b01 + a31 * b11 + a32 * b21 + a33 * b31,
+            a30 * b02 + a31 * b12 + a32 * b22 + a33 * b32,
+            a30 * b03 + a31 * b13 + a32 * b23 + a33 * b33,
+        )
     }
 
-    operator fun unaryMinus(): Mat4 {
-        val m1 = this
-        val m2 = Mat4()
-        for (r in 0..3) {
-            for (c in 0..3) {
-                m2[r][c] = -m1[r][c]
-            }
-        }
-        return m2
-    }
+    operator fun unaryMinus() = Mat4(
+        -m00, -m01, -m02, -m03,
+        -m10, -m11, -m12, -m13,
+        -m20, -m21, -m22, -m23,
+        -m30, -m31, -m32, -m33,
+    )
 
+    // Treats Float4 as a column vector.
     operator fun times(v: Float4) = Float4(
-        v1.x * v.x + v1.y * v.y + v1.z * v.z + v1.w * v.w,
-        v2.x * v.x + v2.y * v.y + v2.z * v.z + v2.w * v.w,
-        v3.x * v.x + v3.y * v.y + v3.z * v.z + v3.w * v.w,
-        v4.x * v.x + v4.y * v.y + v4.z * v.z + v4.w * v.w
+        m00 * v.x + m01 * v.y + m02 * v.z + m03 * v.w,
+        m10 * v.x + m11 * v.y + m12 * v.z + m13 * v.w,
+        m20 * v.x + m21 * v.y + m22 * v.z + m23 * v.w,
+        m30 * v.x + m31 * v.y + m32 * v.z + m33 * v.w,
     )
 
 }
 
 fun ModelMatrix(translation: Float3, rx: Float, ry: Float, rz: Float, scalar: Float3): Mat4 {
     return Mat4()
-        .identity()
         .translate(translation)
-        .rotate(rx, ry, rz, Float3(1f, 1f, 1f))
+        .rotateX(rx)
+        .rotateY(ry)
+        .rotateZ(rz)
         .scale(scalar)
 }
 
 fun ModelMatrix(translation: Float3, quaternion: Quaternion, scalar: Float3): Mat4 {
     return Mat4()
-        .identity()
         .translate(translation)
         .rotate(quaternion)
         .scale(scalar)
@@ -287,14 +346,14 @@ fun ModelMatrix(translation: Float3, quaternion: Quaternion, scalar: Float3): Ma
 
 fun RigidMatrix(translation: Float3, rx: Float, ry: Float, rz: Float): Mat4 {
     return Mat4()
-        .identity()
         .translate(translation)
-        .rotate(rx, ry, rz, Float3(1f, 1f, 1f))
+        .rotateX(rx)
+        .rotateY(ry)
+        .rotateZ(rz)
 }
 
 fun RigidMatrix(translation: Float3, quaternion: Quaternion): Mat4 {
     return Mat4()
-        .identity()
         .translate(translation)
         .rotate(quaternion)
 }
@@ -331,9 +390,10 @@ fun PerspectiveMatrix(aspectRatio: Float, fov: Degree, zNear: Float, zFar: Float
     )
 }
 
-fun NormalMatrix(): Mat4 {
-    return Mat4()
-        .identity()
-        .inverse()
-        .transpose()
+fun NormalMatrix4(model: Mat4): Mat4 {
+    return model.inverse().transpose()
+}
+
+fun NormalMatrix3(model: Mat4): Mat3 {
+    return Mat3(model).inverse().transpose()
 }
