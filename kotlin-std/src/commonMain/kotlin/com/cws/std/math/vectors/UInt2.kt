@@ -16,11 +16,13 @@
 package com.cws.std.math.vectors
 
 import com.cws.std.memory.NativeData
+import com.cws.std.memory.NativeList
 import com.cws.std.memory.STD140_SIZE_BYTES
 import com.cws.std.memory.STD430_SIZE_BYTES
 import kotlin.math.sqrt
 
 @NativeData
+@NativeList
 data class UInt2(
     var x: UInt = 0u,
     var y: UInt = 0u,

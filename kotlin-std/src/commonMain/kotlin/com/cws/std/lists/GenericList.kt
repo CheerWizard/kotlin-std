@@ -1,38 +1,35 @@
-package #pkg
+package com.cws.std.lists
 
-import com.cws.std.memory.NativeData
-
+import com.cws.std.memory.NativeBuffer
+import kotlin.jvm.JvmStatic
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-@NativeData
-class #TList(
-    array: #TArray,
+inline fun <reified T> GenericList(
+    capacity: Int = 16,
+    noinline init: (Int) -> T? = { null },
+) = GenericList(Array(capacity, init), init)
+
+// generic list implementation for SoA, which is less optimized because it uses heap allocations and object references during read/write
+class GenericList<T>(
+    array: Array<T>,
+    private val init: (Int) -> T,
     size: Int = 0,
-) {
+) : Collection<T> {
 
-    // constructor must be inlined to force NOT heap allocate "init" lambda
-    @Suppress("WRONG_MODIFIER_TARGET")
-    inline constructor(
-        capacity: Int = 16,
-        init: (Int) -> #T = { #DEFAULT_VALUE }
-    ) : this(#TArray(capacity, init))
-
-    var array: #TArray = array
+    var array: Array<T> = array
         private set
 
-    var size = size
-        private set
+    private var _size = size
+
+    override val size: Int get() = _size
 
     val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
-        get() = size == 0
-
     val isNotEmpty: Boolean
-        get() = size != 0
+        get() = _size > 0
 
     val indices: IntRange
         get() = 0 until size
@@ -40,36 +37,51 @@ class #TList(
     val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
-        size = 0
+    override fun isEmpty(): Boolean = _size <= 0
+
+    override fun contains(element: T): Boolean = array.contains(element)
+
+    override fun containsAll(elements: Collection<T>): Boolean {
+        var contains = 0
+        elements.forEach {
+            if (array.contains(it)) contains++
+        }
+        return contains == elements.size
     }
 
-    fun first(): #T {
+    // FIXME: not really used and implemented at the moment.
+    override fun iterator(): Iterator<T> = iterator {}
+
+    fun clear() {
+        _size = 0
+    }
+
+    fun first(): T {
         check(size > 0)
         return array[0]
     }
 
-    fun last(): #T {
+    fun last(): T {
         check(size > 0)
         return array[size - 1]
     }
 
-    operator fun get(index: Int): #T {
+    operator fun get(index: Int): T {
         check(index in 0 until size)
         return array[index]
     }
 
-    operator fun set(index: Int, value: #T) {
+    operator fun set(index: Int, value: T) {
         check(index in 0 until size)
         array[index] = value
     }
 
-    fun add(value: #T) {
+    fun add(value: T) {
         ensureCapacity(size + 1)
-        array[size++] = value
+        array[_size++] = value
     }
 
-    fun addAll(values: #TArray, start: Int = 0, end: Int = values.size) {
+    fun addAll(values: Array<T>, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
         ensureCapacity(size + valuesSize)
         values.copyInto(
@@ -78,28 +90,30 @@ class #TList(
             startIndex = start,
             endIndex = end,
         )
-        size += valuesSize
+        _size += valuesSize
     }
 
-    fun addAll(values: #TList) = addAll(values.array, 0, values.size)
+    fun addAll(values: GenericList<T>) = addAll(values.array, 0, values.size)
 
-    fun push(value: #T) = add(value)
+    fun push(value: T) = add(value)
 
-    fun pop(): #T {
+    fun pop(): T {
         check(size > 0)
-        return array[--size]
+        return array[--_size]
     }
 
-    fun removeLast(): #T = pop()
+    fun removeLast(): T = pop()
 
+    @OptIn(ExperimentalStdlibApi::class)
     fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
-        array = array.copyOf((newCapacity * 1.1f).roundToInt())
+        array = array.copyOf((newCapacity * 1.1f).roundToInt(), init)
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     fun trimToSize() {
         if (size != capacity) {
-            array = array.copyOf(size)
+            array = array.copyOf(size, init)
         }
     }
 
@@ -107,11 +121,11 @@ class #TList(
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): #T {
+    fun removeAtSwap(index: Int): T {
         check(index in 0 until size)
 
         val removed = array[index]
-        val last = --size
+        val last = --_size
 
         if (index != last) {
             array[index] = array[last]
@@ -120,24 +134,24 @@ class #TList(
         return removed
     }
 
-    fun clone(): #TList {
-        val copy = #TList(array.copyOf(), size)
+    fun clone(): GenericList<T> {
+        val copy = GenericList(array.copyOf(), init, size)
         return copy
     }
 
-    inline fun forEach(block: (#T) -> Unit) {
+    inline fun forEach(block: (T) -> Unit) {
         for (i in 0 until size) {
             block(array[i])
         }
     }
 
-    inline fun forEachIndexed(block: (Int, #T) -> Unit) {
+    inline fun forEachIndexed(block: (Int, T) -> Unit) {
         for (i in 0 until size) {
             block(i, array[i])
         }
     }
 
-    inline fun find(block: (#T) -> Boolean): #T? {
+    inline fun find(block: (T) -> Boolean): T? {
         for (i in 0 until size) {
             val value = array[i]
             if (block(value)) {
@@ -147,7 +161,7 @@ class #TList(
         return null
     }
 
-    inline fun findIndex(block: (#T) -> Boolean): Int {
+    inline fun findIndex(block: (T) -> Boolean): Int {
         for (i in 0 until size) {
             if (block(array[i])) {
                 return i
@@ -156,8 +170,8 @@ class #TList(
         return -1
     }
 
-    inline fun filter(block: (#T) -> Boolean): #TList {
-        val result = #TList(size)
+    inline fun filter(block: (T) -> Boolean): GenericList<T> {
+        val result = clone()
 
         for (i in 0 until size) {
             val value = array[i]
@@ -169,21 +183,7 @@ class #TList(
         return result
     }
 
-    fun sort() {
-        array.sort(0, size)
-    }
-
-    fun sortDescending() {
-        array.sortDescending(0, size)
-    }
-
-    fun sorted(): #TList =
-        clone().apply { sort() }
-
-    fun sortedDescending(): #TList =
-        clone().apply { sortDescending() }
-
-    fun sortWith(comparator: (#T, #T) -> Int) {
+    fun sortWith(comparator: (T, T) -> Int) {
 
         fun quicksort(from: Int, to: Int) {
             if (from >= to) return
@@ -217,18 +217,18 @@ class #TList(
         }
     }
 
-    inline fun sortBy(crossinline selector: (#T) -> Int) {
+    inline fun sortBy(crossinline selector: (T) -> Int) {
         sortWith { a, b ->
             selector(a).compareTo(selector(b))
         }
     }
 
-    fun sortedWith(comparator: (#T, #T) -> Int): #TList =
+    fun sortedWith(comparator: (T, T) -> Int): GenericList<T> =
         clone().apply {
             sortWith(comparator)
         }
 
-    inline fun sortedBy(crossinline selector: (#T) -> Int): #TList =
+    inline fun sortedBy(crossinline selector: (T) -> Int): GenericList<T> =
         clone().apply {
             sortBy(selector)
         }
@@ -243,14 +243,25 @@ class #TList(
         }
     }
 
-    fun shuffled(random: Random = Random): #TList =
+    fun shuffled(random: Random = Random): GenericList<T> =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: #T) {
+    fun fill(value: T) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    fun addFrom(source: GenericList<T>, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        _size += source.size
     }
 }

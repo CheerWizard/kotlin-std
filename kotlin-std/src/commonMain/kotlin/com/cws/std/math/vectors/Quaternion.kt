@@ -19,12 +19,14 @@ import com.cws.std.math.operators.Radians
 import com.cws.std.math.operators.dot
 import com.cws.std.math.operators.normalize
 import com.cws.std.memory.NativeData
+import com.cws.std.memory.NativeList
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 @NativeData
+@NativeList
 data class Quaternion(
     var x: Float = 0f,
     var y: Float = 0f,

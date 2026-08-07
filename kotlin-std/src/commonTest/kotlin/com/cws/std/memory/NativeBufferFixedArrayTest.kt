@@ -61,6 +61,11 @@ class NativeBufferFixedArrayTest {
     }
 
     @Test
+    fun `boolean array exact size round trip`() {
+        testBooleanArray(BooleanArray(8) { (it % 2) == 0 }, 8)
+    }
+
+    @Test
     fun `short array exact size round trip`() {
         testShortArray(ShortArray(8) { it.toShort() }, 8)
     }
@@ -99,6 +104,25 @@ class NativeBufferFixedArrayTest {
             assertContentEquals(
                 values,
                 buffer.nextByteArray(fixedSize)
+            )
+
+            buffer.release()
+        }
+
+    private fun testBooleanArray(values: BooleanArray, fixedSize: Int) =
+        forEachConfiguration { layout, _, buffer ->
+            buffer.pushFixedBooleanArray(values, fixedSize)
+
+            assertEquals(
+                fixedSize * Byte.sizeBytes(layout),
+                buffer.position
+            )
+
+            buffer.flip()
+
+            assertContentEquals(
+                values,
+                buffer.nextBooleanArray(fixedSize)
             )
 
             buffer.release()

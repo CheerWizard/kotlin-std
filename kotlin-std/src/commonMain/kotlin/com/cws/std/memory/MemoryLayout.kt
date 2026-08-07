@@ -140,6 +140,8 @@ fun Double.Companion.sizeBytes(layout: MemoryLayout) =
 
 fun ByteArray.sizeBytes(layout: MemoryLayout) = size * Byte.sizeBytes(layout)
 
+fun BooleanArray.sizeBytes(layout: MemoryLayout) = size * Boolean.sizeBytes(layout)
+
 fun UByteArray.sizeBytes(layout: MemoryLayout) = size * UByte.sizeBytes(layout)
 
 fun ShortArray.sizeBytes(layout: MemoryLayout) = size * Short.sizeBytes(layout)

@@ -19,6 +19,7 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.get
+import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.plus
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.set
@@ -325,6 +326,21 @@ actual class NativeBuffer actual constructor(
     }
 
     actual fun copyToByteArray(array: ByteArray, offset: Int, sizeBytes: Int): ByteArray {
+        if (isHeapBoundary()) {
+            array.usePinned { pinned ->
+                heapBuffer?.usePinned { srcPinned ->
+                    memcpy(pinned.addressOf(0), srcPinned.addressOf(offset), (sizeBytes * 1).toULong())
+                }
+            }
+        } else {
+            array.usePinned { pinned ->
+                memcpy(pinned.addressOf(0), buffer + offset, (sizeBytes * 1).toULong())
+            }
+        }
+        return array
+    }
+
+    actual fun copyToBooleanArray(array: BooleanArray, offset: Int, sizeBytes: Int): BooleanArray {
         if (isHeapBoundary()) {
             array.usePinned { pinned ->
                 heapBuffer?.usePinned { srcPinned ->

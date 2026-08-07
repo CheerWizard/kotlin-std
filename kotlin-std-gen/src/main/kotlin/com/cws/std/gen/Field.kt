@@ -18,6 +18,7 @@ package com.cws.std.gen
 import com.squareup.kotlinpoet.TypeName
 
 data class Field(
+    val packageName: String,
     val name: String,
     val offset: String,
     val typeName: TypeName,
@@ -25,6 +26,7 @@ data class Field(
     val defaultValue: String,
     val fixedSize: Int?,
     val isStringUtf16: Boolean,
+    val isNativeEnum: Boolean,
 )
 
 fun Field.sizeExpression(): String = when {

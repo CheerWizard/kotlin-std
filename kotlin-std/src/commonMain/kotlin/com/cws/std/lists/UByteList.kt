@@ -1,14 +1,13 @@
-package #pkg
+package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
-
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
-class #TList(
-    array: #TArray,
+class UByteList(
+    array: UByteArray,
     size: Int = 0,
 ) {
 
@@ -16,17 +15,17 @@ class #TList(
     @Suppress("WRONG_MODIFIER_TARGET")
     inline constructor(
         capacity: Int = 16,
-        init: (Int) -> #T = { #DEFAULT_VALUE }
-    ) : this(#TArray(capacity, init))
+        init: (Int) -> UByte = { 0u }
+    ) : this(UByteArray(capacity, init))
 
-    var array: #TArray = array
+    var array: UByteArray = array
         private set
 
     var size = size
         private set
 
     val capacity: Int
-        get() = array.size
+        get() = this@UByteList.array.size
 
     val isEmpty: Boolean
         get() = size == 0
@@ -44,36 +43,36 @@ class #TList(
         size = 0
     }
 
-    fun first(): #T {
+    fun first(): UByte {
         check(size > 0)
-        return array[0]
+        return this@UByteList.array[0]
     }
 
-    fun last(): #T {
+    fun last(): UByte {
         check(size > 0)
-        return array[size - 1]
+        return this@UByteList.array[size - 1]
     }
 
-    operator fun get(index: Int): #T {
+    operator fun get(index: Int): UByte {
         check(index in 0 until size)
-        return array[index]
+        return this@UByteList.array[index]
     }
 
-    operator fun set(index: Int, value: #T) {
+    operator fun set(index: Int, value: UByte) {
         check(index in 0 until size)
-        array[index] = value
+        this@UByteList.array[index] = value
     }
 
-    fun add(value: #T) {
+    fun add(value: UByte) {
         ensureCapacity(size + 1)
-        array[size++] = value
+        this@UByteList.array[size++] = value
     }
 
-    fun addAll(values: #TArray, start: Int = 0, end: Int = values.size) {
+    fun addAll(values: UByteArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
         ensureCapacity(size + valuesSize)
         values.copyInto(
-            destination = array,
+            destination = this@UByteList.array,
             destinationOffset = size,
             startIndex = start,
             endIndex = end,
@@ -81,25 +80,36 @@ class #TList(
         size += valuesSize
     }
 
-    fun addAll(values: #TList) = addAll(values.array, 0, values.size)
-
-    fun push(value: #T) = add(value)
-
-    fun pop(): #T {
-        check(size > 0)
-        return array[--size]
+    fun addFrom(source: UByteList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = this@UByteList.array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 
-    fun removeLast(): #T = pop()
+    fun addAll(values: UByteList) = addAll(values.array, 0, values.size)
+
+    fun push(value: UByte) = add(value)
+
+    fun pop(): UByte {
+        check(size > 0)
+        return this@UByteList.array[--size]
+    }
+
+    fun removeLast(): UByte = pop()
 
     fun ensureCapacity(newCapacity: Int) {
-        if (newCapacity <= array.size) return
-        array = array.copyOf((newCapacity * 1.1f).roundToInt())
+        if (newCapacity <= this@UByteList.array.size) return
+        this@UByteList.array = this@UByteList.array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
     fun trimToSize() {
         if (size != capacity) {
-            array = array.copyOf(size)
+            this@UByteList.array = this@UByteList.array.copyOf(size)
         }
     }
 
@@ -107,39 +117,39 @@ class #TList(
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): #T {
+    fun removeAtSwap(index: Int): UByte {
         check(index in 0 until size)
 
-        val removed = array[index]
+        val removed = this@UByteList.array[index]
         val last = --size
 
         if (index != last) {
-            array[index] = array[last]
+            this@UByteList.array[index] = this@UByteList.array[last]
         }
 
         return removed
     }
 
-    fun clone(): #TList {
-        val copy = #TList(array.copyOf(), size)
+    fun clone(): UByteList {
+        val copy = UByteList(this@UByteList.array.copyOf(), size)
         return copy
     }
 
-    inline fun forEach(block: (#T) -> Unit) {
+    inline fun forEach(block: (UByte) -> Unit) {
         for (i in 0 until size) {
-            block(array[i])
+            block(this@UByteList.array[i])
         }
     }
 
-    inline fun forEachIndexed(block: (Int, #T) -> Unit) {
+    inline fun forEachIndexed(block: (Int, UByte) -> Unit) {
         for (i in 0 until size) {
-            block(i, array[i])
+            block(i, this@UByteList.array[i])
         }
     }
 
-    inline fun find(block: (#T) -> Boolean): #T? {
+    inline fun find(block: (UByte) -> Boolean): UByte? {
         for (i in 0 until size) {
-            val value = array[i]
+            val value = this@UByteList.array[i]
             if (block(value)) {
                 return value
             }
@@ -147,20 +157,20 @@ class #TList(
         return null
     }
 
-    inline fun findIndex(block: (#T) -> Boolean): Int {
+    inline fun findIndex(block: (UByte) -> Boolean): Int {
         for (i in 0 until size) {
-            if (block(array[i])) {
+            if (block(this@UByteList.array[i])) {
                 return i
             }
         }
         return -1
     }
 
-    inline fun filter(block: (#T) -> Boolean): #TList {
-        val result = #TList(size)
+    inline fun filter(block: (UByte) -> Boolean): UByteList {
+        val result = UByteList(size)
 
         for (i in 0 until size) {
-            val value = array[i]
+            val value = this@UByteList.array[i]
             if (block(value)) {
                 result.add(value)
             }
@@ -170,20 +180,20 @@ class #TList(
     }
 
     fun sort() {
-        array.sort(0, size)
+        this@UByteList.array.sort(0, size)
     }
 
     fun sortDescending() {
-        array.sortDescending(0, size)
+        this@UByteList.array.sortDescending(0, size)
     }
 
-    fun sorted(): #TList =
+    fun sorted(): UByteList =
         clone().apply { sort() }
 
-    fun sortedDescending(): #TList =
+    fun sortedDescending(): UByteList =
         clone().apply { sortDescending() }
 
-    fun sortWith(comparator: (#T, #T) -> Int) {
+    fun sortWith(comparator: (UByte, UByte) -> Int) {
 
         fun quicksort(from: Int, to: Int) {
             if (from >= to) return
@@ -217,18 +227,18 @@ class #TList(
         }
     }
 
-    inline fun sortBy(crossinline selector: (#T) -> Int) {
+    inline fun sortBy(crossinline selector: (UByte) -> Int) {
         sortWith { a, b ->
             selector(a).compareTo(selector(b))
         }
     }
 
-    fun sortedWith(comparator: (#T, #T) -> Int): #TList =
+    fun sortedWith(comparator: (UByte, UByte) -> Int): UByteList =
         clone().apply {
             sortWith(comparator)
         }
 
-    inline fun sortedBy(crossinline selector: (#T) -> Int): #TList =
+    inline fun sortedBy(crossinline selector: (UByte) -> Int): UByteList =
         clone().apply {
             sortBy(selector)
         }
@@ -237,20 +247,20 @@ class #TList(
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
-            val tmp = array[i]
-            array[i] = array[j]
-            array[j] = tmp
+            val tmp = this@UByteList.array[i]
+            this@UByteList.array[i] = this@UByteList.array[j]
+            this@UByteList.array[j] = tmp
         }
     }
 
-    fun shuffled(random: Random = Random): #TList =
+    fun shuffled(random: Random = Random): UByteList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: #T) {
+    fun fill(value: UByte) {
         for (i in 0 until size) {
-            array[i] = value
+            this@UByteList.array[i] = value
         }
     }
 }

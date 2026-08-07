@@ -1,14 +1,13 @@
-package #pkg
+package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
-
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
-class #TList(
-    array: #TArray,
+class ShortList(
+    array: ShortArray,
     size: Int = 0,
 ) {
 
@@ -16,10 +15,10 @@ class #TList(
     @Suppress("WRONG_MODIFIER_TARGET")
     inline constructor(
         capacity: Int = 16,
-        init: (Int) -> #T = { #DEFAULT_VALUE }
-    ) : this(#TArray(capacity, init))
+        init: (Int) -> Short = { 0 }
+    ) : this(ShortArray(capacity, init))
 
-    var array: #TArray = array
+    var array: ShortArray = array
         private set
 
     var size = size
@@ -44,32 +43,32 @@ class #TList(
         size = 0
     }
 
-    fun first(): #T {
+    fun first(): Short {
         check(size > 0)
         return array[0]
     }
 
-    fun last(): #T {
+    fun last(): Short {
         check(size > 0)
         return array[size - 1]
     }
 
-    operator fun get(index: Int): #T {
+    operator fun get(index: Int): Short {
         check(index in 0 until size)
         return array[index]
     }
 
-    operator fun set(index: Int, value: #T) {
+    operator fun set(index: Int, value: Short) {
         check(index in 0 until size)
         array[index] = value
     }
 
-    fun add(value: #T) {
+    fun add(value: Short) {
         ensureCapacity(size + 1)
         array[size++] = value
     }
 
-    fun addAll(values: #TArray, start: Int = 0, end: Int = values.size) {
+    fun addAll(values: ShortArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
         ensureCapacity(size + valuesSize)
         values.copyInto(
@@ -81,16 +80,27 @@ class #TList(
         size += valuesSize
     }
 
-    fun addAll(values: #TList) = addAll(values.array, 0, values.size)
+    fun addFrom(source: ShortList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
+    }
 
-    fun push(value: #T) = add(value)
+    fun addAll(values: ShortList) = addAll(values.array, 0, values.size)
 
-    fun pop(): #T {
+    fun push(value: Short) = add(value)
+
+    fun pop(): Short {
         check(size > 0)
         return array[--size]
     }
 
-    fun removeLast(): #T = pop()
+    fun removeLast(): Short = pop()
 
     fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
@@ -107,7 +117,7 @@ class #TList(
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): #T {
+    fun removeAtSwap(index: Int): Short {
         check(index in 0 until size)
 
         val removed = array[index]
@@ -120,24 +130,24 @@ class #TList(
         return removed
     }
 
-    fun clone(): #TList {
-        val copy = #TList(array.copyOf(), size)
+    fun clone(): ShortList {
+        val copy = ShortList(array.copyOf(), size)
         return copy
     }
 
-    inline fun forEach(block: (#T) -> Unit) {
+    inline fun forEach(block: (Short) -> Unit) {
         for (i in 0 until size) {
             block(array[i])
         }
     }
 
-    inline fun forEachIndexed(block: (Int, #T) -> Unit) {
+    inline fun forEachIndexed(block: (Int, Short) -> Unit) {
         for (i in 0 until size) {
             block(i, array[i])
         }
     }
 
-    inline fun find(block: (#T) -> Boolean): #T? {
+    inline fun find(block: (Short) -> Boolean): Short? {
         for (i in 0 until size) {
             val value = array[i]
             if (block(value)) {
@@ -147,7 +157,7 @@ class #TList(
         return null
     }
 
-    inline fun findIndex(block: (#T) -> Boolean): Int {
+    inline fun findIndex(block: (Short) -> Boolean): Int {
         for (i in 0 until size) {
             if (block(array[i])) {
                 return i
@@ -156,8 +166,8 @@ class #TList(
         return -1
     }
 
-    inline fun filter(block: (#T) -> Boolean): #TList {
-        val result = #TList(size)
+    inline fun filter(block: (Short) -> Boolean): ShortList {
+        val result = ShortList(size)
 
         for (i in 0 until size) {
             val value = array[i]
@@ -177,13 +187,13 @@ class #TList(
         array.sortDescending(0, size)
     }
 
-    fun sorted(): #TList =
+    fun sorted(): ShortList =
         clone().apply { sort() }
 
-    fun sortedDescending(): #TList =
+    fun sortedDescending(): ShortList =
         clone().apply { sortDescending() }
 
-    fun sortWith(comparator: (#T, #T) -> Int) {
+    fun sortWith(comparator: (Short, Short) -> Int) {
 
         fun quicksort(from: Int, to: Int) {
             if (from >= to) return
@@ -217,18 +227,18 @@ class #TList(
         }
     }
 
-    inline fun sortBy(crossinline selector: (#T) -> Int) {
+    inline fun sortBy(crossinline selector: (Short) -> Int) {
         sortWith { a, b ->
             selector(a).compareTo(selector(b))
         }
     }
 
-    fun sortedWith(comparator: (#T, #T) -> Int): #TList =
+    fun sortedWith(comparator: (Short, Short) -> Int): ShortList =
         clone().apply {
             sortWith(comparator)
         }
 
-    inline fun sortedBy(crossinline selector: (#T) -> Int): #TList =
+    inline fun sortedBy(crossinline selector: (Short) -> Int): ShortList =
         clone().apply {
             sortBy(selector)
         }
@@ -243,12 +253,12 @@ class #TList(
         }
     }
 
-    fun shuffled(random: Random = Random): #TList =
+    fun shuffled(random: Random = Random): ShortList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: #T) {
+    fun fill(value: Short) {
         for (i in 0 until size) {
             array[i] = value
         }

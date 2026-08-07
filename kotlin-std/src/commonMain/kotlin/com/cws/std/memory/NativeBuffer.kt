@@ -15,6 +15,7 @@
  */
 package com.cws.std.memory
 
+import com.cws.std.lists.GenericList
 import com.cws.std.math.matrices.Mat2
 import com.cws.std.math.matrices.Mat3
 import com.cws.std.math.matrices.Mat4
@@ -270,6 +271,15 @@ fun NativeBuffer.setDouble(
 
 fun NativeBuffer.getDouble(index: Int): Double = unpackDouble(index)
 
+fun NativeBuffer.setBooleanArray(
+    index: Int,
+    array: BooleanArray,
+) {
+    for (i in array.indices) {
+        setBoolean(index + i, array[i])
+    }
+}
+
 @OptIn(ExperimentalUnsignedTypes::class)
 fun NativeBuffer.setUByteArray(
     index: Int,
@@ -382,6 +392,27 @@ fun NativeBuffer.nextByteArray(size: Int): ByteArray {
     position += size * Byte.sizeBytes(memoryLayout)
     return value
 }
+
+fun NativeBuffer.copyToBooleanArray(
+    array: BooleanArray,
+    offset: Int,
+    sizeBytes: Int,
+): BooleanArray {
+    for (i in 0 until sizeBytes) {
+        array[i] = getBoolean(offset + i)
+    }
+    return array
+}
+
+fun NativeBuffer.nextBooleanArray(): BooleanArray = nextBooleanArray(nextInt())
+
+fun NativeBuffer.nextBooleanArray(size: Int): BooleanArray {
+    if (size <= 0) return BooleanArray(0)
+    val value = copyToBooleanArray(BooleanArray(size), position, size)
+    position += size * Boolean.sizeBytes(memoryLayout)
+    return value
+}
+
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun NativeBuffer.nextUByteArray(): UByteArray = nextUByteArray(nextInt())
@@ -574,6 +605,11 @@ inline fun <T> NativeBuffer.nextSet(decode: () -> T): Set<T> {
     }
 }
 
+inline fun <reified T> NativeBuffer.nextGenericList(crossinline decode: () -> T): GenericList<T?> {
+    val size = nextInt()
+    return GenericList(size) { decode() }
+}
+
 inline fun <K, V> NativeBuffer.nextMap(
     decodeKey: () -> K,
     decodeValue: () -> V,
@@ -684,6 +720,37 @@ fun NativeBuffer.pushPackedByteArray(
         "pushPackedByteArray value == null"
     }
     setByteArray(position, value)
+    position += value.sizeBytes(memoryLayout)
+}
+
+fun NativeBuffer.pushBooleanArray(value: BooleanArray?) {
+    if (value == null || value.isEmpty()) {
+        pushInt(0)
+    } else {
+        pushInt(value.size)
+        setBooleanArray(position, value)
+        position += value.sizeBytes(memoryLayout)
+    }
+}
+
+fun NativeBuffer.pushFixedBooleanArray(
+    value: BooleanArray?,
+    size: Int,
+) {
+    require(value != null && value.size == size) {
+        "pushFixedBooleanArray value == null or value.size != fixedSize"
+    }
+    setBooleanArray(position, value)
+    position += size * Boolean.sizeBytes(memoryLayout)
+}
+
+fun NativeBuffer.pushPackedBooleanArray(
+    value: BooleanArray?,
+) {
+    require(value != null) {
+        "pushPackedBooleanArray value == null"
+    }
+    setBooleanArray(position, value)
     position += value.sizeBytes(memoryLayout)
 }
 

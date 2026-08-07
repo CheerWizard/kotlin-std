@@ -20,10 +20,12 @@ import com.cws.std.math.matrices.*
 import com.cws.std.memory.NativeData
 import com.cws.std.memory.NativeEnum
 import com.cws.std.memory.NativeFixedSize
+import com.cws.std.memory.NativeList
 import com.cws.std.memory.NativeStringUtf16
 import kotlin.math.PI
 
 @NativeEnum
+@NativeList
 enum class TestEnumOrdinal {
     Ordinal_0,
     Ordinal_1,
@@ -34,6 +36,7 @@ enum class TestEnumOrdinal {
 }
 
 @NativeEnum
+@NativeList
 enum class TestEnumRaw(val rawValue: Float) {
     Raw_0(0.125f),
     Raw_1(123.3f),
@@ -106,3 +109,68 @@ data class TestData(
     )
 
 }
+
+@NativeEnum
+enum class HeroClass {
+    Warrior,
+    Mage,
+    Archer,
+}
+
+@NativeList
+data class Stats(
+    val health: Int,
+    val mana: Float,
+    val stamina: Double,
+    val level: Short,
+    val alive: Boolean,
+)
+
+@NativeList
+data class Transform(
+    val x: Float,
+    val y: Float,
+    val z: Float,
+    val rotation: Float,
+    val scale: Float,
+)
+
+@NativeList
+data class InventoryItem(
+    val id: Int,
+    val amount: Int,
+)
+
+@NativeList
+data class Hero(
+
+    // Primitive lists
+    val id: Int,
+    val experience: Long,
+    val speed: Float,
+    val weight: Double,
+    val level: Short,
+    val prestige: Byte,
+    val enabled: Boolean,
+    val symbol: Char,
+
+    // String
+    val name: String,
+
+    // Fixed-size string metadata
+    @NativeFixedSize(32)
+    val tag: String,
+
+    // Native enum
+    val heroClass: HeroClass,
+
+    // Nested NativeLists
+    val transform: Transform,
+    val stats: Stats,
+
+    // Generic reference
+    val nickname: String?,
+
+    // Generic collection
+    val inventory: List<InventoryItem>,
+)

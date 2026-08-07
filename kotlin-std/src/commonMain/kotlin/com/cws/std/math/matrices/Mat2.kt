@@ -19,12 +19,13 @@ import com.cws.std.math.operators.inverse
 import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float2
 import com.cws.std.memory.MemoryLayout
+import com.cws.std.memory.NativeList
 import com.cws.std.memory.sizeBytes
 
 fun Mat2.sizeBytes(layout: MemoryLayout) = 4 * Float.sizeBytes(layout)
 fun Mat2.sizeBytesPacked(layout: MemoryLayout) = 4 * Float.sizeBytes(layout)
 
-
+@NativeList
 data class Mat2(
     var m00: Float = 1f,
     var m01: Float = 0f,

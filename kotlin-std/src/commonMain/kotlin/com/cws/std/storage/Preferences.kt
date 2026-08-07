@@ -16,6 +16,7 @@
 package com.cws.std.storage
 
 expect class Preferences {
+
     fun setByte(
         key: String,
         value: Byte,
@@ -101,4 +102,5 @@ expect class Preferences {
     fun commit()
 
     fun sync()
+
 }

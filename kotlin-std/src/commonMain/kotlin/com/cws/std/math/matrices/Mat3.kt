@@ -20,11 +20,13 @@ import com.cws.std.math.operators.transpose
 import com.cws.std.math.vectors.Float3
 import com.cws.std.memory.MemoryLayout
 import com.cws.std.memory.NativeData
+import com.cws.std.memory.NativeList
 import com.cws.std.memory.sizeBytes
 
 fun Mat3.sizeBytes(layout: MemoryLayout) = 9 * Float.sizeBytes(layout)
 fun Mat3.sizeBytesPacked(layout: MemoryLayout) = 9 * Float.sizeBytes(layout)
 
+@NativeList
 data class Mat3(
     var m00: Float = 1f,
     var m01: Float = 0f,

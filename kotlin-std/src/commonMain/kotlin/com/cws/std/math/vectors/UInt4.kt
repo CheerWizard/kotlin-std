@@ -17,8 +17,10 @@ package com.cws.std.math.vectors
 
 import com.cws.std.math.operators.sqrt
 import com.cws.std.memory.NativeData
+import com.cws.std.memory.NativeList
 
 @NativeData
+@NativeList
 data class UInt4(
     var x: UInt = 0u,
     var y: UInt = 0u,

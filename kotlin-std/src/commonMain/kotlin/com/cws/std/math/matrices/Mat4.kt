@@ -28,6 +28,7 @@ import com.cws.std.math.vectors.Float3
 import com.cws.std.math.vectors.Float4
 import com.cws.std.math.vectors.Quaternion
 import com.cws.std.memory.MemoryLayout
+import com.cws.std.memory.NativeList
 import com.cws.std.memory.sizeBytes
 import kotlin.math.cos
 import kotlin.math.sin
@@ -36,6 +37,7 @@ import kotlin.math.tan
 fun Mat4.sizeBytes(layout: MemoryLayout) = 16 * Float.sizeBytes(layout)
 fun Mat4.sizeBytesPacked(layout: MemoryLayout) = 16 * Float.sizeBytes(layout)
 
+@NativeList
 data class Mat4(
     var m00: Float = 1f,
     var m01: Float = 0f,

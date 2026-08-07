@@ -17,8 +17,10 @@ package com.cws.std.math.vectors
 
 import com.cws.std.math.operators.sqrt
 import com.cws.std.memory.NativeData
+import com.cws.std.memory.NativeList
 
 @NativeData
+@NativeList
 data class Int4(
     var x: Int = 0,
     var y: Int = 0,

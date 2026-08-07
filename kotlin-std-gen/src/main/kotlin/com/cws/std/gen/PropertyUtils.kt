@@ -15,6 +15,8 @@
  */
 package com.cws.std.gen
 
+import com.google.devtools.ksp.symbol.ClassKind
+import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName
@@ -38,6 +40,7 @@ fun KSPropertyDeclaration.createField(offset: String): Field {
     }
 
     return Field(
+        packageName = packageName.asString(),
         name = simpleName.asString(),
         offset = offset,
         type = simpleType,
@@ -45,5 +48,6 @@ fun KSPropertyDeclaration.createField(offset: String): Field {
         defaultValue = typesWithDefaults.getOrDefault(simpleType, "$simpleType()"),
         fixedSize = nativeFixedSize(),
         isStringUtf16 = nativeStringUtf16(),
+        isNativeEnum = (resolvedType.declaration as? KSClassDeclaration)?.classKind == ClassKind.ENUM_CLASS,
     )
 }

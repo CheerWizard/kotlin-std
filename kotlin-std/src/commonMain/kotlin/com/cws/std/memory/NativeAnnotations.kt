@@ -36,3 +36,8 @@ annotation class NativeFixedSize(
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.SOURCE)
 annotation class NativeStringUtf16
+
+// use this annotation to generate SoA implementation with collections-like methods for target class
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.SOURCE)
+annotation class NativeList

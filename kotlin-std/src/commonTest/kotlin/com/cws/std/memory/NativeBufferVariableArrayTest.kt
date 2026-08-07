@@ -29,6 +29,14 @@ class NativeBufferVariableArrayTest {
     }
 
     @Test
+    fun `boolean array round trip`() {
+        testBooleanArray(null)
+        testBooleanArray(booleanArrayOf())
+        testBooleanArray(booleanArrayOf(true, false))
+        testBooleanArray(booleanArrayOf(true, false, true, true, false, false, true))
+    }
+
+    @Test
     fun `short array round trip`() {
         testShortArray(null)
         testShortArray(shortArrayOf())
@@ -88,6 +96,28 @@ class NativeBufferVariableArrayTest {
             )
 
             assertEquals(buffer.limit.coerceAtLeast(0), buffer.limit) // keep buffer referenced
+            buffer.release()
+        }
+
+    private fun testBooleanArray(values: BooleanArray?) =
+        forEachConfiguration { layout, _, buffer ->
+
+            val expected = values ?: BooleanArray(0)
+
+            buffer.pushBooleanArray(values)
+
+            assertEquals(
+                Int.sizeBytes(layout) + expected.sizeBytes(layout),
+                buffer.position,
+            )
+
+            buffer.flip()
+
+            assertContentEquals(
+                expected,
+                buffer.nextBooleanArray(),
+            )
+
             buffer.release()
         }
 

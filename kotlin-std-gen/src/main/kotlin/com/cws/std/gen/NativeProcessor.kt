@@ -24,7 +24,6 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -53,9 +52,19 @@ class NativeProcessor(
     private val memoryBoundaryClass = ClassName(packageMemory, "MemoryBoundary")
     private val byteArrayClass = ClassName("kotlin", "ByteArray")
 
+    private val fileGenerator = FileGenerator(logger, generator)
+
+    private val nativeListProcessor = NativeListProcessor(logger, fileGenerator)
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        nativeListProcessor.process(resolver)
         scanNativeData(resolver)
         scanNativeEnum(resolver)
+
+        // ATTENTION: only comment this out, when primitive lists need regeneration with new updates.
+        // primitive lists only need to be generated once and copied into com.cws.std.lists package
+//        generatePrimitiveLists()
+
         return emptyList()
     }
 
@@ -211,7 +220,7 @@ class NativeProcessor(
                     sizeBytes ?: when {
                         field.isCollection -> {
                             when {
-                                field.type.isArray || field.type.isList || field.type.isSet -> {
+                                field.type.isListCollection -> {
                                     val elementSize = collectionElementSizeExpr(fileSpec, field)
                                     "Int.SIZE_BYTES + ${field.name}.sumOf { $elementSize }"
                                 }
@@ -261,7 +270,7 @@ class NativeProcessor(
                     sizeBytes ?: when {
                         field.isCollection -> {
                             when {
-                                field.type.isArray || field.type.isList || field.type.isSet -> {
+                                field.type.isListCollection -> {
                                     val elementSize = collectionElementSizePackedExpr(fileSpec, field)
                                     "${field.name}.sumOf { $elementSize }"
                                 }
@@ -425,7 +434,7 @@ class NativeProcessor(
             }
 
             is ParameterizedTypeName -> when {
-                nonNull.rawType.simpleName.isArray || nonNull.rawType.simpleName.isList || nonNull.rawType.simpleName.isSet -> {
+                nonNull.rawType.simpleName.isListCollection -> {
                     val inner = elementSizeExpr(fileSpec, nonNull.typeArguments.first(), "it")
                     "Int.SIZE_BYTES + $ref.sumOf { $inner }"
                 }
@@ -471,7 +480,7 @@ class NativeProcessor(
             }
 
             is ParameterizedTypeName -> when {
-                nonNull.rawType.simpleName.isArray || nonNull.rawType.simpleName.isList || nonNull.rawType.simpleName.isSet -> {
+                nonNull.rawType.simpleName.isListCollection -> {
                     val inner = elementSizePackedExpr(fileSpec, nonNull.typeArguments.first(), "it")
                     "$ref.sumOf { $inner }"
                 }
@@ -532,23 +541,9 @@ class NativeProcessor(
                                 ?: error("Collection field '${field.name}' typeName is not ParameterizedTypeName: ${field.typeName::class.simpleName}")
 
                             when {
-                                field.type.isArray -> {
+                                field.type.isListCollection -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
-                                        ?: error("Array field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
-                                    addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
-                                }
-
-                                field.type.isList -> {
-                                    val elementType = parameterized.typeArguments.firstOrNull()
-                                        ?: error("List field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
-                                    addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
-                                }
-
-                                field.type.isSet -> {
-                                    val elementType = parameterized.typeArguments.firstOrNull()
-                                        ?: error("Set field '${field.name}' has no type argument")
+                                        ?: error("Collection field '${field.name}' has no type argument")
                                     val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushCollection(${field.name}) { $encodeElement }")
                                 }
@@ -614,23 +609,9 @@ class NativeProcessor(
                                 ?: error("Collection field '${field.name}' typeName is not ParameterizedTypeName: ${field.typeName::class.simpleName}")
 
                             when {
-                                field.type.isArray -> {
+                                field.type.isListCollection -> {
                                     val elementType = parameterized.typeArguments.firstOrNull()
-                                        ?: error("Array field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
-                                    addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
-                                }
-
-                                field.type.isList -> {
-                                    val elementType = parameterized.typeArguments.firstOrNull()
-                                        ?: error("List field '${field.name}' has no type argument")
-                                    val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
-                                    addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
-                                }
-
-                                field.type.isSet -> {
-                                    val elementType = parameterized.typeArguments.firstOrNull()
-                                        ?: error("Set field '${field.name}' has no type argument")
+                                        ?: error("Collection field '${field.name}' has no type argument")
                                     val encodeElement = encodeExprFor(elementType, "buffer", fileSpec, functionSuffix)
                                     addStatement("buffer.pushPackedCollection(${field.name}) { $encodeElement }")
                                 }
@@ -728,6 +709,13 @@ class NativeProcessor(
                                         ?: error("Set field '${field.name}' has no type argument")
                                     val decodeElement = decodeExprFor(elementType, "this", fileSpec, functionSuffix)
                                     addStatement("  nextSet { $decodeElement },")
+                                }
+
+                                field.type.isGenericList -> {
+                                    val elementType = parameterized.typeArguments.firstOrNull()
+                                        ?: error("GenericList field '${field.name}' has no type argument")
+                                    val decodeElement = decodeExprFor(elementType, "this", fileSpec, functionSuffix)
+                                    addStatement("  nextGenericList { $decodeElement },")
                                 }
 
                                 field.type.isMap -> {
@@ -922,6 +910,10 @@ class NativeProcessor(
                         val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec, functionSuffix)
                         "$bufferExpr.nextSet { $innerDecode }"
                     }
+                    nonNull.rawType.simpleName.isGenericList -> {
+                        val innerDecode = decodeExprFor(nonNull.typeArguments.first(), bufferExpr, fileSpec, functionSuffix)
+                        "$bufferExpr.nextGenericList { $innerDecode }"
+                    }
                     nonNull.rawType.simpleName.isMap -> {
                         val decodeKey = decodeExprFor(nonNull.typeArguments[0], bufferExpr, fileSpec, functionSuffix)
                         val decodeValue = decodeExprFor(nonNull.typeArguments[1], bufferExpr, fileSpec, functionSuffix)
@@ -960,6 +952,36 @@ class NativeProcessor(
 
             it.write(output)
         }
+    }
+
+    private fun generatePrimitiveLists() {
+        val pkg = "com.cws.std.lists"
+        primitiveTypes.forEach { type ->
+            typesWithDefaults[type]?.let { default ->
+                generatePrimitiveList(pkg, type, default)
+            }
+        }
+    }
+
+    private fun generatePrimitiveList(pkg: String, type: String, default: String) {
+        if (fileGenerator.contains("${type}List")) return
+
+        val code = readTemplate("PrimitiveList")
+            .replace("#pkg", pkg)
+            .replace("#T", type)
+            .replace("#DEFAULT_VALUE", default)
+
+        fileGenerator.generateFile(pkg, "${type}List", code)
+    }
+
+    private fun readTemplate(name: String): String {
+        val file = "templates/$name.txt"
+        logger.warn("readTemplate: $file")
+        return NativeProcessor::class.java.classLoader
+            .getResourceAsStream(file)
+            ?.bufferedReader()
+            ?.readText()
+            ?: error("File not found $file")
     }
 
 }
