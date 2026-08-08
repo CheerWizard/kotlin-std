@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class CharList(
+    var size: Int = 0,
     array: CharArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,61 +17,61 @@ class CharList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> Char = { '\u0000' }
-    ) : this(CharArray(capacity, init))
+    ) : this(capacity, CharArray(capacity, init))
 
     var array: CharArray = array
-        private set
 
-    var size = size
-        private set
-
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): Char {
-        check(size > 0)
+    inline fun first(): Char {
         return array[0]
     }
 
-    fun last(): Char {
-        check(size > 0)
+    inline fun last(): Char {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): Char {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): Char {
         return array[index]
     }
 
-    operator fun set(index: Int, value: Char) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: Char) {
         array[index] = value
     }
 
-    fun add(value: Char) {
+    inline fun add(value: Char) {
         ensureCapacity(size + 1)
+        addUnsafe(value)
+    }
+
+    inline fun addUnsafe(value: Char) {
         array[size++] = value
     }
 
-    fun addAll(values: CharArray, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: CharArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: CharArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
             destination = array,
             destinationOffset = size,
@@ -80,46 +81,32 @@ class CharList(
         size += valuesSize
     }
 
-    fun addFrom(source: CharList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
-    }
+    inline fun addAll(values: CharList) = addAll(values.array, 0, values.size)
 
-    fun addAll(values: CharList) = addAll(values.array, 0, values.size)
+    inline fun push(value: Char) = add(value)
 
-    fun push(value: Char) = add(value)
-
-    fun pop(): Char {
-        check(size > 0)
+    inline fun pop(): Char {
         return array[--size]
     }
 
-    fun removeLast(): Char = pop()
+    inline fun removeLast(): Char = pop()
 
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): Char {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): Char {
         val removed = array[index]
         val last = --size
 
@@ -130,8 +117,8 @@ class CharList(
         return removed
     }
 
-    fun clone(): CharList {
-        val copy = CharList(array.copyOf(), size)
+    inline fun clone(): CharList {
+        val copy = CharList(size, array.copyOf())
         return copy
     }
 
@@ -179,18 +166,18 @@ class CharList(
         return result
     }
 
-    fun sort() {
+    inline fun sort() {
         array.sort(0, size)
     }
 
-    fun sortDescending() {
+    inline fun sortDescending() {
         array.sortDescending(0, size)
     }
 
-    fun sorted(): CharList =
+    inline fun sorted(): CharList =
         clone().apply { sort() }
 
-    fun sortedDescending(): CharList =
+    inline fun sortedDescending(): CharList =
         clone().apply { sortDescending() }
 
     fun sortWith(comparator: (Char, Char) -> Int) {
@@ -243,7 +230,7 @@ class CharList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -253,14 +240,25 @@ class CharList(
         }
     }
 
-    fun shuffled(random: Random = Random): CharList =
+    inline fun shuffled(random: Random = Random): CharList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: Char) {
+    inline fun fill(value: Char) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    inline fun addFrom(source: CharList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

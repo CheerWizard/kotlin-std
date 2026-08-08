@@ -15,6 +15,7 @@
  */
 package com.cws.std.math.matrices
 
+import com.cws.std.math.ClipSpace
 import com.cws.std.math.CoordinateSystem
 import com.cws.std.math.MathConfig
 import com.cws.std.math.operators.Degree
@@ -390,52 +391,141 @@ fun ViewMatrix(position: Float3, front: Float3, up: Float3, coordinateSystem: Co
     }
 }
 
-fun PerspectiveMatrix(aspectRatio: Float, fov: Degree, zNear: Float, zFar: Float, coordinateSystem: CoordinateSystem = MathConfig.coordinateSystem): Mat4 {
+fun PerspectiveMatrix(
+    aspectRatio: Float,
+    fov: Degree,
+    zNear: Float,
+    zFar: Float,
+    coordinateSystem: CoordinateSystem = MathConfig.coordinateSystem,
+    clipSpace: ClipSpace = MathConfig.clipSpace,
+): Mat4 {
+    val f = 1.0f / tan((fov * 0.5f).radians.value)
+
     return when (coordinateSystem) {
         CoordinateSystem.LEFT_HANDED -> {
-            val f = 1.0f / tan((fov * 0.5f).radians.value)
-            val a = zFar / (zFar - zNear)
-            val b = -zNear * zFar / (zFar - zNear)
-            Mat4(
-                f / aspectRatio, 0f, 0f, 0f,
-                0f, -f, 0f, 0f,
-                0f, 0f, a, b,
-                0f, 0f, 1f, 0f,
-            )
+            when (clipSpace) {
+                ClipSpace.ZERO_TO_ONE -> {
+                    val a = zFar / (zFar - zNear)
+                    val b = -zNear * zFar / (zFar - zNear)
+                    Mat4(
+                        f / aspectRatio, 0f, 0f, 0f,
+                        0f, -f, 0f, 0f,
+                        0f, 0f, a,  b,
+                        0f, 0f, 1f, 0f,
+                    )
+                }
+
+                ClipSpace.MINUS_ONE_TO_ONE -> {
+                    val a = (zFar + zNear) / (zFar - zNear)
+                    val b = -2.0f * zNear * zFar / (zFar - zNear)
+                    Mat4(
+                        f / aspectRatio, 0f, 0f, 0f,
+                        0f, -f, 0f, 0f,
+                        0f, 0f, a,  b,
+                        0f, 0f, 1f, 0f,
+                    )
+                }
+            }
         }
+
         CoordinateSystem.RIGHT_HANDED -> {
-            val f = 1.0f / tan((fov * 0.5f).radians.value)
-            val a = zFar / (zNear - zFar)
-            val b = zNear * zFar / (zNear - zFar)
-            Mat4(
-                f / aspectRatio, 0f, 0f, 0f,
-                0f, -f, 0f, 0f,
-                0f, 0f, a, b,
-                0f, 0f, -1f, 0f,
-            )
+            when (clipSpace) {
+                ClipSpace.ZERO_TO_ONE -> {
+                    val a = zFar / (zNear - zFar)
+                    val b = zNear * zFar / (zNear - zFar)
+                    Mat4(
+                        f / aspectRatio, 0f, 0f, 0f,
+                        0f, -f, 0f, 0f,
+                        0f, 0f, a,  b,
+                        0f, 0f, -1f, 0f,
+                    )
+                }
+
+                ClipSpace.MINUS_ONE_TO_ONE -> {
+                    val a = (zFar + zNear) / (zNear - zFar)
+                    val b = 2.0f * zNear * zFar / (zNear - zFar)
+                    Mat4(
+                        f / aspectRatio, 0f, 0f, 0f,
+                        0f, -f, 0f, 0f,
+                        0f, 0f, a,  b,
+                        0f, 0f, -1f, 0f,
+                    )
+                }
+            }
         }
     }
 }
 
-fun OrthoMatrix(left: Float, right: Float, bottom: Float, top: Float, zNear: Float, zFar: Float, coordinateSystem: CoordinateSystem = MathConfig.coordinateSystem): Mat4 {
-    return when (coordinateSystem) {
-        CoordinateSystem.LEFT_HANDED -> Mat4(
-            2.0f / (right - left), 0.0f, 0.0f, 0.0f,
-            0.0f, 2.0f / (bottom - top), 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f / (zFar - zNear), 0.0f,
-            -(right + left) / (right - left), -(bottom + top) / (bottom - top), -zNear / (zFar - zNear), 1.0f
-        )
-        CoordinateSystem.RIGHT_HANDED -> Mat4(
-            2.0f / (right - left), 0.0f, 0.0f, 0.0f,
-            0.0f, 2.0f / (bottom - top), 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f / (zNear - zFar), 0.0f,
-            -(right + left) / (right - left), -(bottom + top) / (bottom - top), zNear / (zNear - zFar), 1.0f
-        )
-    }
-}
 
-fun NormalMatrix4(model: Mat4): Mat4 {
-    return model.inverse().transpose()
+fun OrthoMatrix(
+    left: Float,
+    right: Float,
+    bottom: Float,
+    top: Float,
+    zNear: Float,
+    zFar: Float,
+    coordinateSystem: CoordinateSystem = MathConfig.coordinateSystem,
+    clipSpace: ClipSpace = MathConfig.clipSpace,
+): Mat4 {
+    val x = 2.0f / (right - left)
+    val y = 2.0f / (bottom - top)
+
+    val tx = -(right + left) / (right - left)
+    val ty = -(bottom + top) / (bottom - top)
+
+    return when (coordinateSystem) {
+        CoordinateSystem.LEFT_HANDED -> {
+            when (clipSpace) {
+                ClipSpace.ZERO_TO_ONE -> {
+                    val z = 1.0f / (zFar - zNear)
+                    val tz = -zNear / (zFar - zNear)
+                    Mat4(
+                        x,    0f,   0f,   tx,
+                        0f,   y,    0f,   ty,
+                        0f,   0f,   z,    tz,
+                        0f,   0f,   0f,   1f,
+                    )
+                }
+
+                ClipSpace.MINUS_ONE_TO_ONE -> {
+                    val z = 2.0f / (zFar - zNear)
+                    val tz = -(zFar + zNear) / (zFar - zNear)
+                    Mat4(
+                        x,    0f,   0f,   tx,
+                        0f,   y,    0f,   ty,
+                        0f,   0f,   z,    tz,
+                        0f,   0f,   0f,   1f,
+                    )
+                }
+            }
+        }
+
+        CoordinateSystem.RIGHT_HANDED -> {
+            when (clipSpace) {
+                ClipSpace.ZERO_TO_ONE -> {
+                    val z = 1.0f / (zNear - zFar)
+                    val tz = zNear / (zNear - zFar)
+                    Mat4(
+                        x, 0f, 0f, tx,
+                        0f, y, 0f, ty,
+                        0f,0f, z, tz,
+                        0f, 0f, 0f, 1f,
+                    )
+                }
+
+                ClipSpace.MINUS_ONE_TO_ONE -> {
+                    val z = 2.0f / (zNear - zFar)
+                    val tz = (zFar + zNear) / (zNear - zFar)
+                    Mat4(
+                        x, 0f, 0f, tx,
+                        0f, y, 0f, ty,
+                        0f, 0f, z, tz,
+                        0f, 0f, 0f, 1f,
+                    )
+                }
+            }
+        }
+    }
 }
 
 fun NormalMatrix3(model: Mat4): Mat3 {

@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class IntList(
+    var size: Int = 0,
     array: IntArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,61 +17,61 @@ class IntList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> Int = { 0 }
-    ) : this(IntArray(capacity, init))
+    ) : this(capacity, IntArray(capacity, init))
 
     var array: IntArray = array
-        private set
 
-    var size = size
-        private set
-
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): Int {
-        check(size > 0)
+    inline fun first(): Int {
         return array[0]
     }
 
-    fun last(): Int {
-        check(size > 0)
+    inline fun last(): Int {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): Int {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): Int {
         return array[index]
     }
 
-    operator fun set(index: Int, value: Int) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: Int) {
         array[index] = value
     }
 
-    fun add(value: Int) {
+    inline fun add(value: Int) {
         ensureCapacity(size + 1)
+        addUnsafe(value)
+    }
+
+    inline fun addUnsafe(value: Int) {
         array[size++] = value
     }
 
-    fun addAll(values: IntArray, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: IntArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: IntArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
             destination = array,
             destinationOffset = size,
@@ -80,46 +81,32 @@ class IntList(
         size += valuesSize
     }
 
-    fun addFrom(source: IntList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
-    }
+    inline fun addAll(values: IntList) = addAll(values.array, 0, values.size)
 
-    fun addAll(values: IntList) = addAll(values.array, 0, values.size)
+    inline fun push(value: Int) = add(value)
 
-    fun push(value: Int) = add(value)
-
-    fun pop(): Int {
-        check(size > 0)
+    inline fun pop(): Int {
         return array[--size]
     }
 
-    fun removeLast(): Int = pop()
+    inline fun removeLast(): Int = pop()
 
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): Int {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): Int {
         val removed = array[index]
         val last = --size
 
@@ -130,8 +117,8 @@ class IntList(
         return removed
     }
 
-    fun clone(): IntList {
-        val copy = IntList(array.copyOf(), size)
+    inline fun clone(): IntList {
+        val copy = IntList(size, array.copyOf())
         return copy
     }
 
@@ -179,18 +166,18 @@ class IntList(
         return result
     }
 
-    fun sort() {
+    inline fun sort() {
         array.sort(0, size)
     }
 
-    fun sortDescending() {
+    inline fun sortDescending() {
         array.sortDescending(0, size)
     }
 
-    fun sorted(): IntList =
+    inline fun sorted(): IntList =
         clone().apply { sort() }
 
-    fun sortedDescending(): IntList =
+    inline fun sortedDescending(): IntList =
         clone().apply { sortDescending() }
 
     fun sortWith(comparator: (Int, Int) -> Int) {
@@ -243,7 +230,7 @@ class IntList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -253,14 +240,25 @@ class IntList(
         }
     }
 
-    fun shuffled(random: Random = Random): IntList =
+    inline fun shuffled(random: Random = Random): IntList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: Int) {
+    inline fun fill(value: Int) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    inline fun addFrom(source: IntList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

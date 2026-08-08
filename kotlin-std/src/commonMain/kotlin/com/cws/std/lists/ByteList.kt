@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class ByteList(
+    var size: Int = 0,
     array: ByteArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,61 +17,61 @@ class ByteList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> Byte = { 0 }
-    ) : this(ByteArray(capacity, init))
+    ) : this(capacity, ByteArray(capacity, init))
 
     var array: ByteArray = array
-        private set
 
-    var size = size
-        private set
-
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): Byte {
-        check(size > 0)
+    inline fun first(): Byte {
         return array[0]
     }
 
-    fun last(): Byte {
-        check(size > 0)
+    inline fun last(): Byte {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): Byte {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): Byte {
         return array[index]
     }
 
-    operator fun set(index: Int, value: Byte) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: Byte) {
         array[index] = value
     }
 
-    fun add(value: Byte) {
+    inline fun add(value: Byte) {
         ensureCapacity(size + 1)
+        addUnsafe(value)
+    }
+
+    inline fun addUnsafe(value: Byte) {
         array[size++] = value
     }
 
-    fun addAll(values: ByteArray, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: ByteArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: ByteArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
             destination = array,
             destinationOffset = size,
@@ -80,46 +81,32 @@ class ByteList(
         size += valuesSize
     }
 
-    fun addFrom(source: ByteList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
-    }
+    inline fun addAll(values: ByteList) = addAll(values.array, 0, values.size)
 
-    fun addAll(values: ByteList) = addAll(values.array, 0, values.size)
+    inline fun push(value: Byte) = add(value)
 
-    fun push(value: Byte) = add(value)
-
-    fun pop(): Byte {
-        check(size > 0)
+    inline fun pop(): Byte {
         return array[--size]
     }
 
-    fun removeLast(): Byte = pop()
+    inline fun removeLast(): Byte = pop()
 
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): Byte {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): Byte {
         val removed = array[index]
         val last = --size
 
@@ -130,8 +117,8 @@ class ByteList(
         return removed
     }
 
-    fun clone(): ByteList {
-        val copy = ByteList(array.copyOf(), size)
+    inline fun clone(): ByteList {
+        val copy = ByteList(size, array.copyOf())
         return copy
     }
 
@@ -179,18 +166,18 @@ class ByteList(
         return result
     }
 
-    fun sort() {
+    inline fun sort() {
         array.sort(0, size)
     }
 
-    fun sortDescending() {
+    inline fun sortDescending() {
         array.sortDescending(0, size)
     }
 
-    fun sorted(): ByteList =
+    inline fun sorted(): ByteList =
         clone().apply { sort() }
 
-    fun sortedDescending(): ByteList =
+    inline fun sortedDescending(): ByteList =
         clone().apply { sortDescending() }
 
     fun sortWith(comparator: (Byte, Byte) -> Int) {
@@ -243,7 +230,7 @@ class ByteList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -253,14 +240,25 @@ class ByteList(
         }
     }
 
-    fun shuffled(random: Random = Random): ByteList =
+    inline fun shuffled(random: Random = Random): ByteList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: Byte) {
+    inline fun fill(value: Byte) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    inline fun addFrom(source: ByteList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

@@ -119,7 +119,7 @@ enum class HeroClass {
 
 @NativeList
 data class Stats(
-    val health: Int,
+    var health: Int,
     val mana: Float,
     val stamina: Double,
     val level: Short,
@@ -128,9 +128,9 @@ data class Stats(
 
 @NativeList
 data class Transform(
-    val x: Float,
-    val y: Float,
-    val z: Float,
+    var x: Float,
+    var y: Float,
+    var z: Float,
     val rotation: Float,
     val scale: Float,
 )
@@ -146,7 +146,7 @@ data class Hero(
 
     // Primitive lists
     val id: Int,
-    val experience: Long,
+    var experience: Long,
     val speed: Float,
     val weight: Double,
     val level: Short,
@@ -170,7 +170,4 @@ data class Hero(
 
     // Generic reference
     val nickname: String?,
-
-    // Generic collection
-    val inventory: List<InventoryItem>,
 )

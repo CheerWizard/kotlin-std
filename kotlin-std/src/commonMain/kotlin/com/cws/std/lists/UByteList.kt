@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class UByteList(
+    var size: Int = 0,
     array: UByteArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,63 +17,63 @@ class UByteList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> UByte = { 0u }
-    ) : this(UByteArray(capacity, init))
+    ) : this(capacity, UByteArray(capacity, init))
 
     var array: UByteArray = array
-        private set
 
-    var size = size
-        private set
+    inline val capacity: Int
+        get() = array.size
 
-    val capacity: Int
-        get() = this@UByteList.array.size
-
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): UByte {
-        check(size > 0)
-        return this@UByteList.array[0]
+    inline fun first(): UByte {
+        return array[0]
     }
 
-    fun last(): UByte {
-        check(size > 0)
-        return this@UByteList.array[size - 1]
+    inline fun last(): UByte {
+        return array[size - 1]
     }
 
-    operator fun get(index: Int): UByte {
-        check(index in 0 until size)
-        return this@UByteList.array[index]
+    inline operator fun get(index: Int): UByte {
+        return array[index]
     }
 
-    operator fun set(index: Int, value: UByte) {
-        check(index in 0 until size)
-        this@UByteList.array[index] = value
+    inline operator fun set(index: Int, value: UByte) {
+        array[index] = value
     }
 
-    fun add(value: UByte) {
+    inline fun add(value: UByte) {
         ensureCapacity(size + 1)
-        this@UByteList.array[size++] = value
+        addUnsafe(value)
     }
 
-    fun addAll(values: UByteArray, start: Int = 0, end: Int = values.size) {
+    inline fun addUnsafe(value: UByte) {
+        array[size++] = value
+    }
+
+    inline fun addAll(values: UByteArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: UByteArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
-            destination = this@UByteList.array,
+            destination = array,
             destinationOffset = size,
             startIndex = start,
             endIndex = end,
@@ -80,76 +81,62 @@ class UByteList(
         size += valuesSize
     }
 
-    fun addFrom(source: UByteList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = this@UByteList.array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
+    inline fun addAll(values: UByteList) = addAll(values.array, 0, values.size)
+
+    inline fun push(value: UByte) = add(value)
+
+    inline fun pop(): UByte {
+        return array[--size]
     }
 
-    fun addAll(values: UByteList) = addAll(values.array, 0, values.size)
+    inline fun removeLast(): UByte = pop()
 
-    fun push(value: UByte) = add(value)
-
-    fun pop(): UByte {
-        check(size > 0)
-        return this@UByteList.array[--size]
+    inline fun ensureCapacity(newCapacity: Int) {
+        if (newCapacity <= array.size) return
+        array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun removeLast(): UByte = pop()
-
-    fun ensureCapacity(newCapacity: Int) {
-        if (newCapacity <= this@UByteList.array.size) return
-        this@UByteList.array = this@UByteList.array.copyOf((newCapacity * 1.1f).roundToInt())
-    }
-
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
-            this@UByteList.array = this@UByteList.array.copyOf(size)
+            array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): UByte {
-        check(index in 0 until size)
-
-        val removed = this@UByteList.array[index]
+    inline fun removeAtSwap(index: Int): UByte {
+        val removed = array[index]
         val last = --size
 
         if (index != last) {
-            this@UByteList.array[index] = this@UByteList.array[last]
+            array[index] = array[last]
         }
 
         return removed
     }
 
-    fun clone(): UByteList {
-        val copy = UByteList(this@UByteList.array.copyOf(), size)
+    inline fun clone(): UByteList {
+        val copy = UByteList(size, array.copyOf())
         return copy
     }
 
     inline fun forEach(block: (UByte) -> Unit) {
         for (i in 0 until size) {
-            block(this@UByteList.array[i])
+            block(array[i])
         }
     }
 
     inline fun forEachIndexed(block: (Int, UByte) -> Unit) {
         for (i in 0 until size) {
-            block(i, this@UByteList.array[i])
+            block(i, array[i])
         }
     }
 
     inline fun find(block: (UByte) -> Boolean): UByte? {
         for (i in 0 until size) {
-            val value = this@UByteList.array[i]
+            val value = array[i]
             if (block(value)) {
                 return value
             }
@@ -159,7 +146,7 @@ class UByteList(
 
     inline fun findIndex(block: (UByte) -> Boolean): Int {
         for (i in 0 until size) {
-            if (block(this@UByteList.array[i])) {
+            if (block(array[i])) {
                 return i
             }
         }
@@ -170,7 +157,7 @@ class UByteList(
         val result = UByteList(size)
 
         for (i in 0 until size) {
-            val value = this@UByteList.array[i]
+            val value = array[i]
             if (block(value)) {
                 result.add(value)
             }
@@ -179,18 +166,18 @@ class UByteList(
         return result
     }
 
-    fun sort() {
-        this@UByteList.array.sort(0, size)
+    inline fun sort() {
+        array.sort(0, size)
     }
 
-    fun sortDescending() {
-        this@UByteList.array.sortDescending(0, size)
+    inline fun sortDescending() {
+        array.sortDescending(0, size)
     }
 
-    fun sorted(): UByteList =
+    inline fun sorted(): UByteList =
         clone().apply { sort() }
 
-    fun sortedDescending(): UByteList =
+    inline fun sortedDescending(): UByteList =
         clone().apply { sortDescending() }
 
     fun sortWith(comparator: (UByte, UByte) -> Int) {
@@ -243,24 +230,35 @@ class UByteList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
-            val tmp = this@UByteList.array[i]
-            this@UByteList.array[i] = this@UByteList.array[j]
-            this@UByteList.array[j] = tmp
+            val tmp = array[i]
+            array[i] = array[j]
+            array[j] = tmp
         }
     }
 
-    fun shuffled(random: Random = Random): UByteList =
+    inline fun shuffled(random: Random = Random): UByteList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: UByte) {
+    inline fun fill(value: UByte) {
         for (i in 0 until size) {
-            this@UByteList.array[i] = value
+            array[i] = value
         }
+    }
+
+    inline fun addFrom(source: UByteList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

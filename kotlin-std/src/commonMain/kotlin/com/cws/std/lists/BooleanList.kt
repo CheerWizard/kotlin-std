@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class BooleanList(
+    var size: Int = 0,
     array: BooleanArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,61 +17,61 @@ class BooleanList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> Boolean = { false }
-    ) : this(BooleanArray(capacity, init))
+    ) : this(capacity, BooleanArray(capacity, init))
 
     var array: BooleanArray = array
-        private set
 
-    var size = size
-        private set
-
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): Boolean {
-        check(size > 0)
+    inline fun first(): Boolean {
         return array[0]
     }
 
-    fun last(): Boolean {
-        check(size > 0)
+    inline fun last(): Boolean {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): Boolean {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): Boolean {
         return array[index]
     }
 
-    operator fun set(index: Int, value: Boolean) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: Boolean) {
         array[index] = value
     }
 
-    fun add(value: Boolean) {
+    inline fun add(value: Boolean) {
         ensureCapacity(size + 1)
+        addUnsafe(value)
+    }
+
+    inline fun addUnsafe(value: Boolean) {
         array[size++] = value
     }
 
-    fun addAll(values: BooleanArray, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: BooleanArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: BooleanArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
             destination = array,
             destinationOffset = size,
@@ -80,46 +81,32 @@ class BooleanList(
         size += valuesSize
     }
 
-    fun addAll(values: BooleanList) = addAll(values.array, 0, values.size)
+    inline fun addAll(values: BooleanList) = addAll(values.array, 0, values.size)
 
-    fun addFrom(source: BooleanList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
-    }
+    inline fun push(value: Boolean) = add(value)
 
-    fun push(value: Boolean) = add(value)
-
-    fun pop(): Boolean {
-        check(size > 0)
+    inline fun pop(): Boolean {
         return array[--size]
     }
 
-    fun removeLast(): Boolean = pop()
+    inline fun removeLast(): Boolean = pop()
 
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): Boolean {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): Boolean {
         val removed = array[index]
         val last = --size
 
@@ -130,8 +117,8 @@ class BooleanList(
         return removed
     }
 
-    fun clone(): BooleanList {
-        val copy = BooleanList(array.copyOf(), size)
+    inline fun clone(): BooleanList {
+        val copy = BooleanList(size, array.copyOf())
         return copy
     }
 
@@ -229,7 +216,7 @@ class BooleanList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -239,14 +226,25 @@ class BooleanList(
         }
     }
 
-    fun shuffled(random: Random = Random): BooleanList =
+    inline fun shuffled(random: Random = Random): BooleanList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: Boolean) {
+    inline fun fill(value: Boolean) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    inline fun addFrom(source: BooleanList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

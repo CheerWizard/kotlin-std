@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class ULongList(
+    var size: Int = 0,
     array: ULongArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,61 +17,61 @@ class ULongList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> ULong = { 0uL }
-    ) : this(ULongArray(capacity, init))
+    ) : this(capacity, ULongArray(capacity, init))
 
     var array: ULongArray = array
-        private set
 
-    var size = size
-        private set
-
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): ULong {
-        check(size > 0)
+    inline fun first(): ULong {
         return array[0]
     }
 
-    fun last(): ULong {
-        check(size > 0)
+    inline fun last(): ULong {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): ULong {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): ULong {
         return array[index]
     }
 
-    operator fun set(index: Int, value: ULong) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: ULong) {
         array[index] = value
     }
 
-    fun add(value: ULong) {
+    inline fun add(value: ULong) {
         ensureCapacity(size + 1)
+        addUnsafe(value)
+    }
+
+    inline fun addUnsafe(value: ULong) {
         array[size++] = value
     }
 
-    fun addAll(values: ULongArray, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: ULongArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: ULongArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
             destination = array,
             destinationOffset = size,
@@ -80,46 +81,32 @@ class ULongList(
         size += valuesSize
     }
 
-    fun addFrom(source: ULongList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
-    }
+    inline fun addAll(values: ULongList) = addAll(values.array, 0, values.size)
 
-    fun addAll(values: ULongList) = addAll(values.array, 0, values.size)
+    inline fun push(value: ULong) = add(value)
 
-    fun push(value: ULong) = add(value)
-
-    fun pop(): ULong {
-        check(size > 0)
+    inline fun pop(): ULong {
         return array[--size]
     }
 
-    fun removeLast(): ULong = pop()
+    inline fun removeLast(): ULong = pop()
 
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): ULong {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): ULong {
         val removed = array[index]
         val last = --size
 
@@ -130,8 +117,8 @@ class ULongList(
         return removed
     }
 
-    fun clone(): ULongList {
-        val copy = ULongList(array.copyOf(), size)
+    inline fun clone(): ULongList {
+        val copy = ULongList(size, array.copyOf())
         return copy
     }
 
@@ -179,18 +166,18 @@ class ULongList(
         return result
     }
 
-    fun sort() {
+    inline fun sort() {
         array.sort(0, size)
     }
 
-    fun sortDescending() {
+    inline fun sortDescending() {
         array.sortDescending(0, size)
     }
 
-    fun sorted(): ULongList =
+    inline fun sorted(): ULongList =
         clone().apply { sort() }
 
-    fun sortedDescending(): ULongList =
+    inline fun sortedDescending(): ULongList =
         clone().apply { sortDescending() }
 
     fun sortWith(comparator: (ULong, ULong) -> Int) {
@@ -243,7 +230,7 @@ class ULongList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -253,14 +240,25 @@ class ULongList(
         }
     }
 
-    fun shuffled(random: Random = Random): ULongList =
+    inline fun shuffled(random: Random = Random): ULongList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: ULong) {
+    inline fun fill(value: ULong) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    inline fun addFrom(source: ULongList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

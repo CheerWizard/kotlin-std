@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class ShortList(
+    var size: Int = 0,
     array: ShortArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,61 +17,61 @@ class ShortList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> Short = { 0 }
-    ) : this(ShortArray(capacity, init))
+    ) : this(capacity, ShortArray(capacity, init))
 
     var array: ShortArray = array
-        private set
 
-    var size = size
-        private set
-
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): Short {
-        check(size > 0)
+    inline fun first(): Short {
         return array[0]
     }
 
-    fun last(): Short {
-        check(size > 0)
+    inline fun last(): Short {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): Short {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): Short {
         return array[index]
     }
 
-    operator fun set(index: Int, value: Short) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: Short) {
         array[index] = value
     }
 
-    fun add(value: Short) {
+    inline fun add(value: Short) {
         ensureCapacity(size + 1)
+        addUnsafe(value)
+    }
+
+    inline fun addUnsafe(value: Short) {
         array[size++] = value
     }
 
-    fun addAll(values: ShortArray, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: ShortArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: ShortArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
             destination = array,
             destinationOffset = size,
@@ -80,46 +81,32 @@ class ShortList(
         size += valuesSize
     }
 
-    fun addFrom(source: ShortList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
-    }
+    inline fun addAll(values: ShortList) = addAll(values.array, 0, values.size)
 
-    fun addAll(values: ShortList) = addAll(values.array, 0, values.size)
+    inline fun push(value: Short) = add(value)
 
-    fun push(value: Short) = add(value)
-
-    fun pop(): Short {
-        check(size > 0)
+    inline fun pop(): Short {
         return array[--size]
     }
 
-    fun removeLast(): Short = pop()
+    inline fun removeLast(): Short = pop()
 
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): Short {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): Short {
         val removed = array[index]
         val last = --size
 
@@ -130,8 +117,8 @@ class ShortList(
         return removed
     }
 
-    fun clone(): ShortList {
-        val copy = ShortList(array.copyOf(), size)
+    inline fun clone(): ShortList {
+        val copy = ShortList(size, array.copyOf())
         return copy
     }
 
@@ -179,18 +166,18 @@ class ShortList(
         return result
     }
 
-    fun sort() {
+    inline fun sort() {
         array.sort(0, size)
     }
 
-    fun sortDescending() {
+    inline fun sortDescending() {
         array.sortDescending(0, size)
     }
 
-    fun sorted(): ShortList =
+    inline fun sorted(): ShortList =
         clone().apply { sort() }
 
-    fun sortedDescending(): ShortList =
+    inline fun sortedDescending(): ShortList =
         clone().apply { sortDescending() }
 
     fun sortWith(comparator: (Short, Short) -> Int) {
@@ -243,7 +230,7 @@ class ShortList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -253,14 +240,25 @@ class ShortList(
         }
     }
 
-    fun shuffled(random: Random = Random): ShortList =
+    inline fun shuffled(random: Random = Random): ShortList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: Short) {
+    inline fun fill(value: Short) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    inline fun addFrom(source: ShortList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

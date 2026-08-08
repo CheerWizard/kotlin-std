@@ -1,14 +1,15 @@
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @NativeData
 class FloatList(
+    var size: Int = 0,
     array: FloatArray,
-    size: Int = 0,
 ) {
 
     // constructor must be inlined to force NOT heap allocate "init" lambda
@@ -16,61 +17,61 @@ class FloatList(
     inline constructor(
         capacity: Int = 16,
         init: (Int) -> Float = { 0f }
-    ) : this(FloatArray(capacity, init))
+    ) : this(capacity, FloatArray(capacity, init))
 
     var array: FloatArray = array
-        private set
 
-    var size = size
-        private set
-
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isEmpty: Boolean
+    inline val isEmpty: Boolean
         get() = size == 0
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = size != 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
-    fun clear() {
+    inline fun clear() {
         size = 0
     }
 
-    fun first(): Float {
-        check(size > 0)
+    inline fun first(): Float {
         return array[0]
     }
 
-    fun last(): Float {
-        check(size > 0)
+    inline fun last(): Float {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): Float {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): Float {
         return array[index]
     }
 
-    operator fun set(index: Int, value: Float) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: Float) {
         array[index] = value
     }
 
-    fun add(value: Float) {
+    inline fun add(value: Float) {
         ensureCapacity(size + 1)
+        addUnsafe(value)
+    }
+
+    inline fun addUnsafe(value: Float) {
         array[size++] = value
     }
 
-    fun addAll(values: FloatArray, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: FloatArray, start: Int = 0, end: Int = values.size) {
+        ensureCapacity(size + abs(end - start))
+        addAllUnsafe(values, start, end)
+    }
+
+    inline fun addAllUnsafe(values: FloatArray, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
-        ensureCapacity(size + valuesSize)
         values.copyInto(
             destination = array,
             destinationOffset = size,
@@ -80,46 +81,32 @@ class FloatList(
         size += valuesSize
     }
 
-    fun addFrom(source: FloatList, index: Int) {
-        ensureCapacity(index + source.size)
-        source.array.copyInto(
-            destination = array,
-            destinationOffset = index,
-            startIndex = 0,
-            endIndex = source.size,
-        )
-        size += source.size
-    }
+    inline fun addAll(values: FloatList) = addAll(values.array, 0, values.size)
 
-    fun addAll(values: FloatList) = addAll(values.array, 0, values.size)
+    inline fun push(value: Float) = add(value)
 
-    fun push(value: Float) = add(value)
-
-    fun pop(): Float {
-        check(size > 0)
+    inline fun pop(): Float {
         return array[--size]
     }
 
-    fun removeLast(): Float = pop()
+    inline fun removeLast(): Float = pop()
 
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt())
     }
 
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): Float {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): Float {
         val removed = array[index]
         val last = --size
 
@@ -130,8 +117,8 @@ class FloatList(
         return removed
     }
 
-    fun clone(): FloatList {
-        val copy = FloatList(array.copyOf(), size)
+    inline fun clone(): FloatList {
+        val copy = FloatList(size, array.copyOf())
         return copy
     }
 
@@ -179,18 +166,18 @@ class FloatList(
         return result
     }
 
-    fun sort() {
+    inline fun sort() {
         array.sort(0, size)
     }
 
-    fun sortDescending() {
+    inline fun sortDescending() {
         array.sortDescending(0, size)
     }
 
-    fun sorted(): FloatList =
+    inline fun sorted(): FloatList =
         clone().apply { sort() }
 
-    fun sortedDescending(): FloatList =
+    inline fun sortedDescending(): FloatList =
         clone().apply { sortDescending() }
 
     fun sortWith(comparator: (Float, Float) -> Int) {
@@ -243,7 +230,7 @@ class FloatList(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -253,14 +240,25 @@ class FloatList(
         }
     }
 
-    fun shuffled(random: Random = Random): FloatList =
+    inline fun shuffled(random: Random = Random): FloatList =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: Float) {
+    inline fun fill(value: Float) {
         for (i in 0 until size) {
             array[i] = value
         }
+    }
+
+    inline fun addFrom(source: FloatList, index: Int) {
+        ensureCapacity(index + source.size)
+        source.array.copyInto(
+            destination = array,
+            destinationOffset = index,
+            startIndex = 0,
+            endIndex = source.size,
+        )
+        size += source.size
     }
 }

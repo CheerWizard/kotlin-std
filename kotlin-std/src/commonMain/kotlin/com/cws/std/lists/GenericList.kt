@@ -1,7 +1,5 @@
 package com.cws.std.lists
 
-import com.cws.std.memory.NativeBuffer
-import kotlin.jvm.JvmStatic
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -14,27 +12,26 @@ inline fun <reified T> GenericList(
 // generic list implementation for SoA, which is less optimized because it uses heap allocations and object references during read/write
 class GenericList<T>(
     array: Array<T>,
-    private val init: (Int) -> T,
+    val init: (Int) -> T,
     size: Int = 0,
 ) : Collection<T> {
 
     var array: Array<T> = array
-        private set
 
-    private var _size = size
+    var _size = size
 
     override val size: Int get() = _size
 
-    val capacity: Int
+    inline val capacity: Int
         get() = array.size
 
-    val isNotEmpty: Boolean
+    inline val isNotEmpty: Boolean
         get() = _size > 0
 
-    val indices: IntRange
+    inline val indices: IntRange
         get() = 0 until size
 
-    val lastIndex: Int
+    inline val lastIndex: Int
         get() = size - 1
 
     override fun isEmpty(): Boolean = _size <= 0
@@ -52,36 +49,32 @@ class GenericList<T>(
     // FIXME: not really used and implemented at the moment.
     override fun iterator(): Iterator<T> = iterator {}
 
-    fun clear() {
+    inline fun clear() {
         _size = 0
     }
 
-    fun first(): T {
-        check(size > 0)
+    inline fun first(): T {
         return array[0]
     }
 
-    fun last(): T {
-        check(size > 0)
+    inline fun last(): T {
         return array[size - 1]
     }
 
-    operator fun get(index: Int): T {
-        check(index in 0 until size)
+    inline operator fun get(index: Int): T {
         return array[index]
     }
 
-    operator fun set(index: Int, value: T) {
-        check(index in 0 until size)
+    inline operator fun set(index: Int, value: T) {
         array[index] = value
     }
 
-    fun add(value: T) {
+    inline fun add(value: T) {
         ensureCapacity(size + 1)
         array[_size++] = value
     }
 
-    fun addAll(values: Array<T>, start: Int = 0, end: Int = values.size) {
+    inline fun addAll(values: Array<T>, start: Int = 0, end: Int = values.size) {
         val valuesSize = abs(end - start)
         ensureCapacity(size + valuesSize)
         values.copyInto(
@@ -93,37 +86,34 @@ class GenericList<T>(
         _size += valuesSize
     }
 
-    fun addAll(values: GenericList<T>) = addAll(values.array, 0, values.size)
+    inline fun addAll(values: GenericList<T>) = addAll(values.array, 0, values.size)
 
-    fun push(value: T) = add(value)
+    inline fun push(value: T) = add(value)
 
-    fun pop(): T {
-        check(size > 0)
+    inline fun pop(): T {
         return array[--_size]
     }
 
-    fun removeLast(): T = pop()
+    inline fun removeLast(): T = pop()
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun ensureCapacity(newCapacity: Int) {
+    inline fun ensureCapacity(newCapacity: Int) {
         if (newCapacity <= array.size) return
         array = array.copyOf((newCapacity * 1.1f).roundToInt(), init)
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun trimToSize() {
+    inline fun trimToSize() {
         if (size != capacity) {
             array = array.copyOf(size, init)
         }
     }
 
-    fun reserve(capacity: Int) {
+    inline fun reserve(capacity: Int) {
         ensureCapacity(capacity)
     }
 
-    fun removeAtSwap(index: Int): T {
-        check(index in 0 until size)
-
+    inline fun removeAtSwap(index: Int): T {
         val removed = array[index]
         val last = --_size
 
@@ -134,7 +124,7 @@ class GenericList<T>(
         return removed
     }
 
-    fun clone(): GenericList<T> {
+    inline fun clone(): GenericList<T> {
         val copy = GenericList(array.copyOf(), init, size)
         return copy
     }
@@ -233,7 +223,7 @@ class GenericList<T>(
             sortBy(selector)
         }
 
-    fun shuffle(random: Random = Random) {
+    inline fun shuffle(random: Random = Random) {
         for (i in lastIndex downTo 1) {
             val j = random.nextInt(i + 1)
 
@@ -243,18 +233,18 @@ class GenericList<T>(
         }
     }
 
-    fun shuffled(random: Random = Random): GenericList<T> =
+    inline fun shuffled(random: Random = Random): GenericList<T> =
         clone().apply {
             shuffle(random)
         }
 
-    fun fill(value: T) {
+    inline fun fill(value: T) {
         for (i in 0 until size) {
             array[i] = value
         }
     }
 
-    fun addFrom(source: GenericList<T>, index: Int) {
+    inline fun addFrom(source: GenericList<T>, index: Int) {
         ensureCapacity(index + source.size)
         source.array.copyInto(
             destination = array,
