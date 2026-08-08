@@ -340,21 +340,6 @@ actual class NativeBuffer actual constructor(
         return array
     }
 
-    actual fun copyToBooleanArray(array: BooleanArray, offset: Int, sizeBytes: Int): BooleanArray {
-        if (isHeapBoundary()) {
-            array.usePinned { pinned ->
-                heapBuffer?.usePinned { srcPinned ->
-                    memcpy(pinned.addressOf(0), srcPinned.addressOf(offset), (sizeBytes * 1).toULong())
-                }
-            }
-        } else {
-            array.usePinned { pinned ->
-                memcpy(pinned.addressOf(0), buffer + offset, (sizeBytes * 1).toULong())
-            }
-        }
-        return array
-    }
-
     actual fun copyToCharArray(array: CharArray, offset: Int, sizeBytes: Int): CharArray {
         if (isHeapBoundary()) {
             array.usePinned { pinned ->

@@ -1,3 +1,22 @@
+/*
+ * Copyright 2026 CheerWizard
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@file:Suppress("NOTHING_TO_INLINE")
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package #pkg
 
 import com.cws.std.memory.NativeData
@@ -6,18 +25,16 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
+inline fun #TList(
+    capacity: Int = 16,
+    noinline init: (Int) -> #T = { #DEFAULT_VALUE }
+) = #TList(capacity, #TArray(capacity, init))
+
 @NativeData
 class #TList(
     var size: Int = 0,
     array: #TArray,
 ) {
-
-    // constructor must be inlined to force NOT heap allocate "init" lambda
-    @Suppress("WRONG_MODIFIER_TARGET")
-    inline constructor(
-        capacity: Int = 16,
-        init: (Int) -> #T = { #DEFAULT_VALUE }
-    ) : this(capacity, #TArray(capacity, init))
 
     var array: #TArray = array
 

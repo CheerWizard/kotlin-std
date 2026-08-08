@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("NOTHING_TO_INLINE")
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package com.cws.std.lists
 
 import com.cws.std.memory.NativeData
@@ -21,18 +24,16 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
+inline fun UIntList(
+    capacity: Int = 16,
+    noinline init: (Int) -> UInt = { 0u }
+) = UIntList(capacity, UIntArray(capacity, init))
+
 @NativeData
 class UIntList(
     var size: Int = 0,
     array: UIntArray,
 ) {
-
-    // constructor must be inlined to force NOT heap allocate "init" lambda
-    @Suppress("WRONG_MODIFIER_TARGET")
-    inline constructor(
-        capacity: Int = 16,
-        init: (Int) -> UInt = { 0u }
-    ) : this(capacity, UIntArray(capacity, init))
 
     var array: UIntArray = array
 
